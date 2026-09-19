@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   ArrowLeft,
   Brain,
@@ -7,175 +11,347 @@ import {
   Users,
   Moon,
   Smartphone,
-  Sprout,
-  BarChart3,
+  Leaf,
 } from "lucide-react";
 
-const STORAGE_KEY = "mente360_test_bienestar_resultado";
+const STORAGE_KEY =
+  "mente360_test_bienestar_resultado";
 
-const AREAS = [
+const areas = [
   {
     key: "Emociones",
-    label: "Emociones",
+    storageKey: "Emociones",
+    title: "Emociones",
     icon: Brain,
     bg: "#e9e4ff",
     color: "#7561d8",
   },
   {
     key: "Autoestima",
-    label: "Autoestima",
+    storageKey: "Autoestima",
+    title: "Autoestima",
     icon: Heart,
-    bg: "#fff0f7",
-    color: "#c46b9a",
+    bg: "#ffe5f0",
+    color: "#c8668d",
   },
   {
     key: "Estudios",
-    label: "Estudios",
+    storageKey: "Estudios",
+    title: "Estudios",
     icon: BookOpen,
-    bg: "#e8f5fb",
-    color: "#477d9c",
+    bg: "#fff1c9",
+    color: "#aa862c",
   },
   {
     key: "Relaciones",
-    label: "Relaciones",
+    storageKey: "Relaciones",
+    title: "Relaciones",
     icon: Users,
-    bg: "#fff4df",
-    color: "#a77b38",
+    bg: "#dff3e5",
+    color: "#57946a",
   },
   {
     key: "Sueño",
-    label: "Sueño",
+    storageKey: "Sueño",
+    title: "Sueño",
     icon: Moon,
-    bg: "#edf0ff",
-    color: "#6478b5",
+    bg: "#dff1fb",
+    color: "#4a91bd",
   },
   {
     key: "Redes sociales",
-    label: "Redes sociales",
+    storageKey: "Redes sociales",
+    title: "Redes sociales",
     icon: Smartphone,
-    bg: "#eef0ff",
-    color: "#6478b5",
+    bg: "#ffe5ed",
+    color: "#c8668d",
   },
   {
     key: "Hábitos",
-    label: "Hábitos",
-    icon: Sprout,
-    bg: "#eaf8ee",
-    color: "#4b9a68",
+    storageKey: "Hábitos",
+    title: "Hábitos",
+    icon: Leaf,
+    bg: "#e5f5e8",
+    color: "#57946a",
   },
 ];
 
-function readTestResult() {
+function leerResultado() {
   try {
-    return JSON.parse(
-      localStorage.getItem(STORAGE_KEY) || "null"
-    );
+    const guardado =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+    return guardado
+      ? JSON.parse(guardado)
+      : null;
   } catch {
     return null;
   }
 }
 
-function getScore(area, result) {
-  const saved = result?.areas?.find(
-    (item) => item.key === area.key
-  );
+function obtenerPuntaje(
+  resultado,
+  area
+) {
+  const guardada =
+    resultado?.areas?.find(
+      (item) =>
+        item.key ===
+        area.storageKey
+    );
 
-  if (!saved) {
+  if (!guardada) {
     return null;
   }
 
-  if (typeof saved.score10 === "number") {
+  if (
+    typeof guardada.score10 ===
+    "number"
+  ) {
     return Math.max(
       0,
-      Math.min(10, saved.score10)
+      Math.min(
+        10,
+        guardada.score10
+      )
     );
   }
 
-  if (typeof saved.average === "number") {
+  if (
+    typeof guardada.average ===
+    "number"
+  ) {
     return Math.max(
       0,
-      Math.min(10, saved.average * 2)
+      Math.min(
+        10,
+        guardada.average * 2
+      )
     );
   }
 
-  if (typeof saved.percent === "number") {
+  if (
+    typeof guardada.percent ===
+    "number"
+  ) {
     return Math.max(
       0,
-      Math.min(10, saved.percent / 10)
+      Math.min(
+        10,
+        guardada.percent / 10
+      )
     );
   }
 
   return null;
 }
 
-function formatScore(score) {
-  if (score === null || score === undefined) {
-    return "—";
-  }
-
-  return Number.isInteger(score)
-    ? String(score)
-    : score.toFixed(1);
-}
-
-export default function Bienestar({ onBack }) {
-  const [testResult, setTestResult] =
-    useState(readTestResult);
+export default function Bienestar({
+  onBack,
+}) {
+  const [
+    resultado,
+    setResultado,
+  ] = useState(
+    leerResultado
+  );
 
   useEffect(() => {
-    const refresh = () => {
-      setTestResult(readTestResult());
-    };
+    const actualizar =
+      () => {
+        setResultado(
+          leerResultado()
+        );
+      };
 
-    refresh();
+    actualizar();
 
     window.addEventListener(
       "storage",
-      refresh
+      actualizar
     );
 
     window.addEventListener(
       "focus",
-      refresh
+      actualizar
     );
 
     return () => {
       window.removeEventListener(
         "storage",
-        refresh
+        actualizar
       );
 
       window.removeEventListener(
         "focus",
-        refresh
+        actualizar
       );
     };
   }, []);
 
-  const areas = useMemo(() => {
-    return AREAS.map((area) => ({
-      ...area,
-      score: getScore(area, testResult),
-    }));
-  }, [testResult]);
+  if (!resultado) {
+    return (
+      <section
+        style={{
+          width: "100%",
+          maxWidth: 430,
+          margin: "0 auto",
+          padding:
+            "8px 14px 105px",
+          color: "#30345d",
+          fontFamily:
+            "Nunito, Poppins, system-ui, sans-serif",
+        }}
+      >
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            border: 0,
+            background:
+              "transparent",
+            color: "#51439d",
+            padding:
+              "7px 0",
+            cursor:
+              "pointer",
+            display:
+              "flex",
+            alignItems:
+              "center",
+            gap: 5,
+            fontWeight:
+              800,
+          }}
+        >
+          <ArrowLeft size={20} />
+          Volver
+        </button>
 
-  const completedAreas = areas.filter(
-    (area) => area.score !== null
-  );
+        <div
+          style={{
+            marginTop: 10,
+            background:
+              "rgba(255,255,255,.94)",
+            border:
+              "1px solid #e7e1f2",
+            borderRadius: 22,
+            padding: 24,
+            textAlign:
+              "center",
+            boxShadow:
+              "0 8px 22px rgba(102,80,150,.07)",
+          }}
+        >
+          <div
+            style={{
+              width: 70,
+              height: 70,
+              margin:
+                "0 auto 12px",
+              borderRadius:
+                "50%",
+              background:
+                "#e9e4ff",
+              display:
+                "grid",
+              placeItems:
+                "center",
+              fontSize: 34,
+            }}
+          >
+            💜
+          </div>
 
-  const overall =
-    completedAreas.length > 0
-      ? completedAreas.reduce(
+          <h1
+            style={{
+              margin: 0,
+              color:
+                "#51439d",
+              fontSize: 24,
+              fontWeight:
+                900,
+            }}
+          >
+            Mi bienestar
+          </h1>
+
+          <p
+            style={{
+              margin:
+                "9px 0 0",
+              color:
+                "#747793",
+              fontSize:
+                12,
+              lineHeight:
+                1.5,
+            }}
+          >
+            Todavía no has realizado
+            el Test de bienestar.
+          </p>
+
+          <p
+            style={{
+              margin:
+                "6px 0 0",
+              color:
+                "#9698aa",
+              fontSize:
+                11,
+              lineHeight:
+                1.5,
+            }}
+          >
+            Cuando completes el test,
+            tus resultados aparecerán
+            aquí automáticamente.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  const valores =
+    areas.map(
+      (area) => ({
+        ...area,
+        score:
+          obtenerPuntaje(
+            resultado,
+            area
+          ),
+      })
+    );
+
+  const areasConResultado =
+    valores.filter(
+      (area) =>
+        area.score !== null
+    );
+
+  const promedio =
+    areasConResultado.length
+      ? areasConResultado.reduce(
           (total, area) =>
-            total + area.score,
+            total +
+            area.score,
           0
-        ) / completedAreas.length
-      : null;
+        ) /
+        areasConResultado.length
+      : 0;
 
-  const lowestArea =
-    completedAreas.length > 0
-      ? [...completedAreas].sort(
-          (a, b) => a.score - b.score
+  const areaMenor =
+    areasConResultado.length
+      ? [
+          ...areasConResultado,
+        ].sort(
+          (a, b) =>
+            a.score -
+            b.score
         )[0]
       : null;
 
@@ -183,76 +359,87 @@ export default function Bienestar({ onBack }) {
     <section
       style={{
         width: "100%",
-        maxWidth: "760px",
+        maxWidth: 430,
         margin: "0 auto",
-        padding: "8px 14px 110px",
+        padding:
+          "8px 14px 105px",
         color: "#30345d",
         fontFamily:
           "Nunito, Poppins, system-ui, sans-serif",
       }}
     >
       {/* VOLVER */}
+
       <button
         type="button"
         onClick={onBack}
         style={{
           border: 0,
-          background: "transparent",
+          background:
+            "transparent",
           color: "#51439d",
-          padding: "7px 0",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          fontSize: "14px",
-          fontWeight: 800,
+          padding:
+            "7px 0",
+          cursor:
+            "pointer",
+          display:
+            "flex",
+          alignItems:
+            "center",
+          gap: 5,
+          fontWeight:
+            800,
         }}
       >
-        <ArrowLeft
-          size={21}
-          strokeWidth={2.3}
-        />
+        <ArrowLeft size={20} />
         Volver
       </button>
 
-      {/* ENCABEZADO */}
+      {/* CABECERA */}
+
       <header
         style={{
-          textAlign: "center",
-          marginTop: "8px",
-          marginBottom: "22px",
+          textAlign:
+            "center",
+          margin:
+            "4px 0 16px",
         }}
       >
         <div
           style={{
-            width: "72px",
-            height: "72px",
-            margin: "0 auto 12px",
-            borderRadius: "50%",
+            width: 72,
+            height: 72,
+            margin:
+              "0 auto 9px",
+            borderRadius:
+              "50%",
             background:
-              "linear-gradient(135deg, #fff0f7, #e9e4ff)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow:
-              "0 10px 25px rgba(102,80,150,.10)",
+              "#e9e4ff",
+            color:
+              "#7561d8",
+            display:
+              "grid",
+            placeItems:
+              "center",
           }}
         >
-          <Heart
-            size={36}
-            color="#c46b9a"
-            fill="#f8c7df"
-            strokeWidth={1.8}
-          />
+          <span
+            style={{
+              fontSize: 34,
+            }}
+          >
+            💜
+          </span>
         </div>
 
         <h1
           style={{
             margin: 0,
-            color: "#51439d",
-            fontSize: "28px",
-            lineHeight: 1.15,
-            fontWeight: 900,
+            color:
+              "#51439d",
+            fontSize: 24,
+            fontWeight:
+              900,
           }}
         >
           Mi bienestar
@@ -260,293 +447,376 @@ export default function Bienestar({ onBack }) {
 
         <p
           style={{
-            margin: "8px auto 0",
-            maxWidth: "480px",
-            color: "#747793",
-            fontSize: "14px",
-            lineHeight: 1.5,
+            margin:
+              "5px auto 0",
+            color:
+              "#747793",
+            fontSize:
+              11.5,
           }}
         >
-          Observa cómo se encuentran las
-          diferentes áreas de tu bienestar.
+          Tus resultados del Test
+          de bienestar.
         </p>
       </header>
 
-      {/* RESUMEN */}
+      {/* RESULTADO GENERAL */}
+
       <div
         style={{
           background:
-            "linear-gradient(135deg, #e9e4ff, #fff0f7)",
-          borderRadius: "24px",
-          padding: "22px",
-          marginBottom: "18px",
+            "linear-gradient(135deg,#f4efff,#ffeef6)",
+          border:
+            "1px solid #e7e1f2",
+          borderRadius: 22,
+          padding: 20,
+          textAlign:
+            "center",
           boxShadow:
-            "0 10px 30px rgba(102,80,150,.10)",
-          border: "1px solid #e7e1f2",
+            "0 8px 22px rgba(102,80,150,.07)",
+          marginBottom: 14,
         }}
       >
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
+            color:
+              "#747793",
+            fontSize:
+              10,
+            fontWeight:
+              900,
+            letterSpacing:
+              ".4px",
+            marginBottom:
+              4,
           }}
         >
-          <div
+          BIENESTAR GENERAL
+        </div>
+
+        <div
+          style={{
+            color:
+              "#51439d",
+            fontSize:
+              42,
+            lineHeight:
+              1,
+            fontWeight:
+              900,
+          }}
+        >
+          {promedio.toFixed(
+            1
+          )}
+
+          <span
             style={{
-              width: "54px",
-              height: "54px",
-              borderRadius: "17px",
-              background: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
+              color:
+                "#747793",
+              fontSize:
+                17,
+              marginLeft:
+                2,
             }}
           >
-            <BarChart3
-              size={28}
-              color="#51439d"
-            />
-          </div>
-
-          <div>
-            <div
-              style={{
-                color: "#747793",
-                fontSize: "12px",
-                fontWeight: 800,
-              }}
-            >
-              Bienestar general
-            </div>
-
-            <div
-              style={{
-                color: "#51439d",
-                fontSize: "30px",
-                lineHeight: 1.1,
-                fontWeight: 900,
-                marginTop: "2px",
-              }}
-            >
-              {overall !== null
-                ? `${formatScore(
-                    Math.round(
-                      overall * 10
-                    ) / 10
-                  )}/10`
-                : "Sin resultado"}
-            </div>
-          </div>
+            /10
+          </span>
         </div>
 
         <p
           style={{
             margin:
-              "14px 0 0",
-            color: "#686a87",
-            fontSize: "12px",
-            lineHeight: 1.5,
+              "7px 0 0",
+            color:
+              "#747793",
+            fontSize:
+              10.5,
           }}
         >
-          {overall !== null
-            ? "Este resultado se obtiene a partir de las áreas guardadas en tu Test de bienestar."
-            : "Completa el Test de bienestar para ver aquí tus resultados."}
+          Resultado de tu último
+          Test de bienestar.
         </p>
       </div>
 
+      {/* ÁREAS */}
+
+      <div
+        style={{
+          display:
+            "grid",
+          gap: 8,
+        }}
+      >
+        {valores.map(
+          (area) => {
+            const Icon =
+              area.icon;
+
+            const score =
+              area.score ===
+              null
+                ? 0
+                : area.score;
+
+            return (
+              <div
+                key={
+                  area.key
+                }
+                style={{
+                  background:
+                    "rgba(255,255,255,.94)",
+                  border:
+                    "1px solid #e7e1f2",
+                  borderRadius: 16,
+                  padding:
+                    "10px 11px",
+                  boxShadow:
+                    "0 5px 14px rgba(102,80,150,.05)",
+                }}
+              >
+                <div
+                  style={{
+                    display:
+                      "flex",
+                    alignItems:
+                      "center",
+                    gap: 9,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius:
+                        11,
+                      background:
+                        area.bg,
+                      color:
+                        area.color,
+                      display:
+                        "grid",
+                      placeItems:
+                        "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon
+                      size={17}
+                    />
+                  </span>
+
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display:
+                          "flex",
+                        justifyContent:
+                          "space-between",
+                        alignItems:
+                          "center",
+                        gap: 7,
+                        marginBottom:
+                          5,
+                      }}
+                    >
+                      <strong
+                        style={{
+                          color:
+                            "#51439d",
+                          fontSize:
+                            11.5,
+                          fontWeight:
+                            900,
+                        }}
+                      >
+                        {
+                          area.title
+                        }
+                      </strong>
+
+                      <span
+                        style={{
+                          color:
+                            area.color,
+                          fontSize:
+                            10.5,
+                          fontWeight:
+                            900,
+                        }}
+                      >
+                        {area.score ===
+                        null
+                          ? "—/10"
+                          : `${score.toFixed(
+                              1
+                            )}/10`}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        height: 6,
+                        background:
+                          "#eeeaf6",
+                        borderRadius:
+                          99,
+                        overflow:
+                          "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width:
+                            `${Math.max(
+                              0,
+                              Math.min(
+                                100,
+                                score *
+                                  10
+                              )
+                            )}%`,
+                          height:
+                            "100%",
+                          background:
+                            area.color,
+                          borderRadius:
+                            99,
+                          transition:
+                            "width .3s ease",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        )}
+      </div>
+
       {/* ÁREA A CUIDAR */}
-      {lowestArea && (
+
+      {areaMenor && (
         <div
           style={{
-            background: "#fcebc0",
-            borderRadius: "20px",
-            padding: "16px 18px",
-            marginBottom: "18px",
+            background:
+              "#fff7df",
+            border:
+              "1px solid #f0dfb2",
+            borderRadius: 17,
+            padding:
+              "12px 14px",
+            marginTop: 11,
           }}
         >
-          <div
+          <strong
             style={{
-              color: "#8a6c2e",
-              fontSize: "12px",
-              fontWeight: 900,
-              marginBottom: "4px",
+              display:
+                "block",
+              color:
+                "#6d5c32",
+              fontSize:
+                11.5,
+              marginBottom:
+                4,
             }}
           >
-            🌱 Área que puedes cuidar
-          </div>
+            🌱 Área para prestar
+            atención
+          </strong>
 
-          <div
+          <strong
             style={{
-              color: "#6f592a",
-              fontSize: "14px",
-              fontWeight: 800,
+              display:
+                "block",
+              color:
+                "#51439d",
+              fontSize:
+                16,
+              marginBottom:
+                3,
             }}
           >
-            {lowestArea.label}
-            {" · "}
-            {formatScore(
-              lowestArea.score
-            )}
-            /10
-          </div>
+            {areaMenor.title}
+          </strong>
 
           <p
             style={{
-              margin: "5px 0 0",
-              color: "#806d42",
-              fontSize: "11px",
-              lineHeight: 1.45,
+              margin: 0,
+              color:
+                "#766b51",
+              fontSize:
+                10.5,
+              lineHeight:
+                1.45,
             }}
           >
-            Puedes explorar las herramientas de
-            Mente360 relacionadas con esta área.
+            {areaMenor.title} tiene
+            el puntaje más bajo de
+            tu último test. Puedes
+            explorar los recursos
+            relacionados en Mente360
+            y avanzar poco a poco.
           </p>
         </div>
       )}
 
-      {/* ÁREAS */}
+      {/* FECHA */}
+
+      {resultado.date && (
+        <p
+          style={{
+            textAlign:
+              "center",
+            margin:
+              "10px 0 0",
+            color:
+              "#9698aa",
+            fontSize:
+              9.5,
+          }}
+        >
+          Último resultado:
+          {" "}
+          {new Date(
+            resultado.date
+          ).toLocaleDateString(
+            "es-PE"
+          )}
+        </p>
+      )}
+
+      {/* AVISO */}
+
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(210px, 1fr))",
-          gap: "14px",
+          marginTop: 9,
+          padding:
+            "10px 13px",
+          borderRadius: 15,
+          background:
+            "#f7f4fc",
+          color:
+            "#747793",
+          fontSize:
+            9.5,
+          lineHeight:
+            1.4,
+          textAlign:
+            "center",
         }}
       >
-        {areas.map((area) => {
-          const Icon = area.icon;
-
-          return (
-            <div
-              key={area.key}
-              style={{
-                background: "#ffffff",
-                border:
-                  "1px solid #e7e1f2",
-                borderRadius: "22px",
-                padding: "18px",
-                boxShadow:
-                  "0 8px 22px rgba(102,80,150,.07)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  marginBottom: "13px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "46px",
-                    height: "46px",
-                    borderRadius: "15px",
-                    background: area.bg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon
-                    size={23}
-                    color={area.color}
-                    strokeWidth={2}
-                  />
-                </div>
-
-                <div
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#30345d",
-                      fontSize: "14px",
-                      fontWeight: 900,
-                    }}
-                  >
-                    {area.label}
-                  </div>
-
-                  <div
-                    style={{
-                      color: "#747793",
-                      fontSize: "11px",
-                      marginTop: "2px",
-                    }}
-                  >
-                    Resultado del test
-                  </div>
-                </div>
-
-                <strong
-                  style={{
-                    color: area.color,
-                    fontSize: "16px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatScore(
-                    area.score
-                  )}
-                  /10
-                </strong>
-              </div>
-
-              {/* BARRA */}
-              <div
-                style={{
-                  height: "9px",
-                  borderRadius: "999px",
-                  background: "#f0edf5",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    width:
-                      area.score !== null
-                        ? `${area.score * 10}%`
-                        : "0%",
-                    height: "100%",
-                    borderRadius:
-                      "999px",
-                    background:
-                      area.color,
-                    transition:
-                      "width .3s ease",
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* INFORMACIÓN */}
-      <div
-        style={{
-          marginTop: "18px",
-          background: "#ffffff",
-          border:
-            "1px solid #e7e1f2",
-          borderRadius: "20px",
-          padding: "17px 18px",
-          color: "#747793",
-          fontSize: "11px",
-          lineHeight: 1.5,
-          textAlign: "center",
-        }}
-      >
-        Tus resultados son una referencia para
-        conocerte mejor. Mente360 no realiza
-        diagnósticos psicológicos.
+        💜 Este resultado es
+        orientativo y educativo.
+        No es un diagnóstico
+        psicológico.
       </div>
     </section>
   );

@@ -758,6 +758,120 @@ function Dashboard({
 
   const [activeSection, setActiveSection] = useState("Inicio");
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const searchItems = [
+    {
+      label: "¿Cómo me siento?",
+      section: "¿Cómo me siento?",
+      description: "Reconoce tus emociones y observa tus cambios.",
+      icon: Brain,
+      keywords: "como me siento emociones sentir animo",
+    },
+    {
+      label: "Manejo del estrés y ansiedad",
+      section: "Manejo del estrés y ansiedad",
+      description: "Ejercicios y técnicas para tu calma.",
+      icon: Zap,
+      keywords: "estres estrés ansiedad calma relajacion relajación respiracion respiración",
+    },
+    {
+      label: "Autoestima",
+      section: "Autoestima",
+      description: "Reconoce tus cualidades y fortalezas.",
+      icon: Heart,
+      keywords: "autoestima cualidades confianza logros",
+    },
+    {
+      label: "Relaciones",
+      section: "Relaciones",
+      description: "Mejora tu comunicación y tus vínculos.",
+      icon: Users,
+      keywords: "relaciones comunicacion comunicación amistades limites límites conflictos",
+    },
+    {
+      label: "Bullying y violencia",
+      section: "Bullying y violencia",
+      description: "Infórmate y aprende a pedir ayuda.",
+      icon: Shield,
+      keywords: "bullying violencia acoso ayuda",
+    },
+    {
+      label: "Estrés académico",
+      section: "Estrés académico",
+      description: "Organiza tu tiempo y estudia mejor.",
+      icon: BookOpen,
+      keywords: "estres estrés academico académico estudios estudiar tareas tiempo",
+    },
+    {
+      label: "Redes sociales",
+      section: "Redes sociales",
+      description: "Usa las redes de forma saludable.",
+      icon: Smartphone,
+      keywords: "redes sociales celular comparacion comparación descanso digital contenido",
+    },
+    {
+      label: "Bienestar diario",
+      section: "Bienestar diario",
+      description: "Cuida tus hábitos y tu energía.",
+      icon: Moon,
+      keywords: "bienestar diario habitos hábitos sueño sueno movimiento alimentacion alimentación",
+    },
+    {
+      label: "Diario emocional",
+      section: "Diario emocional",
+      description: "Escribe lo que sientes cuando lo necesites.",
+      icon: NotebookPen,
+      keywords: "diario emocional escribir sentimientos",
+    },
+    {
+      label: "Mapa de bienestar",
+      section: "Mapa de bienestar",
+      description: "Observa tus resultados de bienestar.",
+      icon: BookOpen,
+      keywords: "mapa resultados progreso areas áreas",
+    },
+    {
+      label: "Test de bienestar",
+      section: "Test de bienestar",
+      description: "Evalúa tus áreas de bienestar.",
+      icon: Zap,
+      keywords: "test bienestar preguntas evaluacion evaluación puntaje",
+    },
+    {
+      label: "Necesito ayuda",
+      section: "Necesito ayuda",
+      description: "Encuentra orientación, apoyo y opciones de ayuda.",
+      icon: CircleHelp,
+      keywords: "ayuda apoyo psicologo psicólogo lineas líneas instituciones",
+    },
+    {
+      label: "Perfil",
+      section: "Perfil",
+      description: "Consulta tu información y bienestar.",
+      icon: UserRound,
+      keywords: "perfil cuenta configuracion configuración seguridad informacion información",
+    },
+  ];
+
+  const normalizeSearch = (value) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f]/g, "");
+
+  const query = normalizeSearch(searchTerm.trim());
+
+  const searchResults = query
+    ? searchItems.filter((item) => {
+        const searchable = normalizeSearch(
+          `${item.label} ${item.description} ${item.keywords}`
+        );
+
+        return searchable.includes(query);
+      })
+    : [];
 
   const goToSection = (label) => {
     setActiveSection(label);
@@ -790,10 +904,10 @@ function Dashboard({
         return <MapaBienestar {...props} />;
       case "Test de bienestar":
         return <TestBienestar {...props} />;
-      case "Necesito ayuda":
-        return <NecesitoAyuda {...props} />;
       case "Perfil":
         return <Perfil {...props} />;
+      case "Necesito ayuda":
+        return <NecesitoAyuda {...props} />;
       default:
         return null;
     }
@@ -847,13 +961,160 @@ function Dashboard({
             <Logo compact />
           </div>
 
-          <div className="search">
+          <div
+            className="search"
+            style={{
+              position: "relative",
+            }}
+          >
 
             <Search size={19} />
 
             <input
+              value={searchTerm}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchTerm(value);
+                setSearchOpen(Boolean(value.trim()));
+              }}
+              onFocus={() => {
+                if (searchTerm.trim()) {
+                  setSearchOpen(true);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setSearchOpen(false);
+                }
+
+                if (e.key === "Enter" && searchResults.length > 0) {
+                  e.preventDefault();
+                  goToSection(searchResults[0].section);
+                  setSearchTerm("");
+                  setSearchOpen(false);
+                }
+              }}
               placeholder="Buscar herramientas, consejos..."
+              aria-label="Buscar herramientas y consejos"
             />
+
+            {searchOpen && searchTerm.trim() && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 10px)",
+                  left: 0,
+                  right: 0,
+                  zIndex: 9999,
+                  background: "#ffffff",
+                  border: "1px solid #e7e1f2",
+                  borderRadius: 18,
+                  padding: 8,
+                  boxShadow: "0 14px 34px rgba(102,80,150,.16)",
+                  maxHeight: 360,
+                  overflowY: "auto",
+                }}
+              >
+
+                {searchResults.length > 0 ? (
+                  searchResults.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <button
+                        key={item.section}
+                        type="button"
+                        onClick={() => {
+                          goToSection(item.section);
+                          setSearchTerm("");
+                          setSearchOpen(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          minHeight: 58,
+                          border: 0,
+                          borderRadius: 13,
+                          background: "transparent",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "9px 10px",
+                          color: "#30345d",
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#f7f3ff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                        }}
+                      >
+
+                        <span
+                          style={{
+                            width: 36,
+                            height: 36,
+                            flex: "0 0 36px",
+                            borderRadius: 11,
+                            display: "grid",
+                            placeItems: "center",
+                            background: "#eee9ff",
+                            color: "#7561d8",
+                          }}
+                        >
+                          <Icon size={18} />
+                        </span>
+
+                        <span
+                          style={{
+                            minWidth: 0,
+                            flex: 1,
+                          }}
+                        >
+                          <strong
+                            style={{
+                              display: "block",
+                              fontSize: 13,
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {item.label}
+                          </strong>
+
+                          <small
+                            style={{
+                              display: "block",
+                              marginTop: 3,
+                              color: "#747793",
+                              fontSize: 11,
+                              lineHeight: 1.25,
+                            }}
+                          >
+                            {item.description}
+                          </small>
+                        </span>
+
+                        <ChevronRight size={17} />
+
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div
+                    style={{
+                      padding: "16px 12px",
+                      color: "#747793",
+                      fontSize: 12,
+                      textAlign: "center",
+                    }}
+                  >
+                    No encontramos una sección con ese nombre.
+                  </div>
+                )}
+
+              </div>
+            )}
 
           </div>
 
@@ -1084,6 +1345,7 @@ function Dashboard({
 
         <button
           type="button"
+          className={activeSection === "Perfil" ? "selected" : ""}
           onClick={() => goToSection("Perfil")}
           title="Perfil"
         >

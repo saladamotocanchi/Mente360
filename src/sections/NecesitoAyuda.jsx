@@ -1,7 +1,22 @@
-import { ArrowLeft, Users, UserRound, Landmark, Phone, Heart, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import {
+  ArrowLeft,
+  Users,
+  UserRound,
+  Landmark,
+  Phone,
+  Heart,
+  ChevronRight,
+} from "lucide-react";
+
+import AdultoConfianza from "./NecesitoAyuda/AdultoConfianza/AdultoConfianza";
+import Psicologo from "./NecesitoAyuda/Psicologo/Psicologo";
+import InstitucionesEducativas from "./NecesitoAyuda/InstitucionesEducativas/InstitucionesEducativas";
+import LineasAyuda from "./NecesitoAyuda/LineasAyuda/LineasAyuda";
 
 const options = [
   {
+    id: "adulto",
     title: "Habla con un adulto de confianza",
     text: "Tu familia, un profesor, etc.",
     icon: Users,
@@ -10,6 +25,7 @@ const options = [
     iconColor: "#4c9a66",
   },
   {
+    id: "psicologo",
     title: "Psicólogo/a",
     text: "Atención profesional.",
     icon: UserRound,
@@ -18,6 +34,7 @@ const options = [
     iconColor: "#7558b8",
   },
   {
+    id: "instituciones",
     title: "Instituciones educativas",
     text: "Tu colegio también te apoya.",
     icon: Landmark,
@@ -26,6 +43,7 @@ const options = [
     iconColor: "#9a7920",
   },
   {
+    id: "lineas",
     title: "Líneas de ayuda",
     text: "Servicios profesionales.",
     icon: Phone,
@@ -36,6 +54,40 @@ const options = [
 ];
 
 export default function NecesitoAyuda({ onBack }) {
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  if (selectedOption === "adulto") {
+    return (
+      <AdultoConfianza
+        onBack={() => setSelectedOption(null)}
+      />
+    );
+  }
+
+  if (selectedOption === "psicologo") {
+    return (
+      <Psicologo
+        onBack={() => setSelectedOption(null)}
+      />
+    );
+  }
+
+  if (selectedOption === "instituciones") {
+    return (
+      <InstitucionesEducativas
+        onBack={() => setSelectedOption(null)}
+      />
+    );
+  }
+
+  if (selectedOption === "lineas") {
+    return (
+      <LineasAyuda
+        onBack={() => setSelectedOption(null)}
+      />
+    );
+  }
+
   return (
     <section
       style={{
@@ -102,65 +154,104 @@ export default function NecesitoAyuda({ onBack }) {
       </div>
 
       <div style={{ display: "grid", gap: 9 }}>
-        {options.map(({ title, text, icon: Icon, bg, iconBg, iconColor }) => (
-          <article
-            key={title}
-            style={{
-              minHeight: 88,
-              padding: "14px 18px",
-              borderRadius: 20,
-              background: bg,
-              border: "1px solid rgba(120,100,150,.10)",
-              boxShadow: "0 6px 18px rgba(102,80,150,.09)",
-              display: "flex",
-              alignItems: "center",
-              gap: 15,
-              boxSizing: "border-box",
-            }}
-          >
-            <div
+        {options.map(
+          ({
+            id,
+            title,
+            text,
+            icon: Icon,
+            bg,
+            iconBg,
+            iconColor,
+          }) => (
+            <article
+              key={title}
+              onClick={() => {
+                if (id === "adulto") {
+                  setSelectedOption("adulto");
+                }
+
+                if (id === "psicologo") {
+                  setSelectedOption("psicologo");
+                }
+
+                if (id === "instituciones") {
+                  setSelectedOption("instituciones");
+                }
+
+                if (id === "lineas") {
+                  setSelectedOption("lineas");
+                }
+              }}
               style={{
-                width: 54,
-                height: 54,
-                minWidth: 54,
-                borderRadius: 17,
-                background: iconBg,
-                color: iconColor,
-                display: "grid",
-                placeItems: "center",
+                minHeight: 88,
+                padding: "14px 18px",
+                borderRadius: 20,
+                background: bg,
+                border: "1px solid rgba(120,100,150,.10)",
+                boxShadow: "0 6px 18px rgba(102,80,150,.09)",
+                display: "flex",
+                alignItems: "center",
+                gap: 15,
+                boxSizing: "border-box",
+                cursor:
+                  id === "adulto" ||
+                  id === "psicologo" ||
+                  id === "instituciones" ||
+                  id === "lineas"
+                    ? "pointer"
+                    : "default",
               }}
             >
-              <Icon size={28} strokeWidth={1.9} />
-            </div>
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h2
+              <div
                 style={{
-                  margin: 0,
-                  color: "#30345d",
-                  fontSize: "clamp(14px, 2.2vw, 17px)",
-                  lineHeight: 1.25,
-                  fontWeight: 900,
+                  width: 54,
+                  height: 54,
+                  minWidth: 54,
+                  borderRadius: 17,
+                  background: iconBg,
+                  color: iconColor,
+                  display: "grid",
+                  placeItems: "center",
                 }}
               >
-                {title}
-              </h2>
-              <p
-                style={{
-                  margin: "3px 0 0",
-                  color: "#747793",
-                  fontSize: "clamp(12px, 1.8vw, 14px)",
-                  lineHeight: 1.3,
-                  fontWeight: 600,
-                }}
-              >
-                {text}
-              </p>
-            </div>
+                <Icon size={28} strokeWidth={1.9} />
+              </div>
 
-            <ChevronRight size={19} color="#7c7d91" strokeWidth={2.2} />
-          </article>
-        ))}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2
+                  style={{
+                    margin: 0,
+                    color: "#30345d",
+                    fontSize: "clamp(14px, 2.2vw, 17px)",
+                    lineHeight: 1.25,
+                    fontWeight: 900,
+                  }}
+                >
+                  {title}
+                </h2>
+
+                <p
+                  style={{
+                    margin: "3px 0 0",
+                    color: "#747793",
+                    fontSize: "clamp(12px, 1.8vw, 14px)",
+                    lineHeight: 1.3,
+                    fontWeight: 600,
+                  }}
+                >
+                  {text}
+                </p>
+              </div>
+
+              <ChevronRight
+                size={19}
+                color="#7c7d91"
+                strokeWidth={2.2}
+              />
+            </article>
+          )
+        )}
       </div>
 
       <div
@@ -176,7 +267,13 @@ export default function NecesitoAyuda({ onBack }) {
           boxSizing: "border-box",
         }}
       >
-        <Heart size={29} color="#df789d" fill="none" strokeWidth={1.9} />
+        <Heart
+          size={29}
+          color="#df789d"
+          fill="none"
+          strokeWidth={1.9}
+        />
+
         <div>
           <strong
             style={{
@@ -188,6 +285,7 @@ export default function NecesitoAyuda({ onBack }) {
           >
             Pedir ayuda no es un signo de debilidad,
           </strong>
+
           <span
             style={{
               display: "block",
