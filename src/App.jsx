@@ -1,8 +1,5 @@
-
-import { useEffect, useState } from "react";
-import { supabase } from "./lib/supabase";
+import { useState } from "react";
 import "./styles.css";
-
 import ComoMeSiento from "./sections/ComoMeSiento";
 import ManejoEstres from "./sections/ManejoEstres";
 import Autoestima from "./sections/Autoestima";
@@ -16,7 +13,6 @@ import MapaBienestar from "./sections/MapaBienestar";
 import TestBienestar from "./sections/TestBienestar";
 import NecesitoAyuda from "./sections/NecesitoAyuda";
 import Perfil from "./sections/Perfil/Perfil";
-import EstadisticasPublicas from "./sections/EstadisticasPublicas";
 
 import {
   Bell,
@@ -26,6 +22,7 @@ import {
   CircleHelp,
   Heart,
   Home,
+  Menu,
   Moon,
   NotebookPen,
   Search,
@@ -33,11 +30,46 @@ import {
   Smartphone,
   UserRound,
   Users,
+  X,
   Zap,
 } from "lucide-react";
 
 /* =========================================================
-   HERRAMIENTAS DEL INICIO
+   MENÚ
+========================================================= */
+
+const menuItems = [
+  ["Inicio", Home],
+  ["¿Cómo me siento?", Brain],
+  ["Estrés y ansiedad", Zap],
+  ["Autoestima", Heart],
+  ["Relaciones", Users],
+  ["Bullying y violencia", Shield],
+  ["Estrés académico", BookOpen],
+  ["Redes sociales", Smartphone],
+  ["Bienestar diario", Moon],
+  ["Diario emocional", NotebookPen],
+  ["Mapa de bienestar", BookOpen],
+  ["Necesito ayuda", CircleHelp],
+];
+
+/* =========================================================
+   EMOCIONES
+========================================================= */
+
+const moods = [
+  ["Feliz", "😊", "yellow"],
+  ["Triste", "😢", "blue"],
+  ["Ansioso/a", "😟", "purple"],
+  ["Enojado/a", "😠", "pink"],
+  ["Calmado/a", "😌", "green"],
+  ["Confundido/a", "😕", "violet"],
+  ["Cansado/a", "😴", "gray"],
+  ["Motivado/a", "⭐", "gold"],
+];
+
+/* =========================================================
+   HERRAMIENTAS
 ========================================================= */
 
 const tools = [
@@ -95,7 +127,7 @@ const tools = [
     NotebookPen,
     "green",
   ],
-];
+ ];
 
 /* =========================================================
    LOGO
@@ -109,7 +141,13 @@ function Logo({ compact = false }) {
       }`}
     >
       <div className="logo-brain">
-        <Brain size={compact ? 25 : 34} />
+        <Brain
+          size={
+            compact
+              ? 25
+              : 34
+          }
+        />
       </div>
 
       <span>
@@ -121,58 +159,90 @@ function Logo({ compact = false }) {
 }
 
 /* =========================================================
-   AUTENTICACIÓN: REGISTRO E INICIO DE SESIÓN
+   PANTALLA DE LOGIN
 ========================================================= */
 
 function AuthScreen({ onEnter }) {
   const [mode, setMode] = useState("login");
+
   const [name, setName] = useState("");
+
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+
+  const [password, setPassword] =
+    useState("");
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [remember, setRemember] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [message, setMessage] =
+    useState("");
+
+  /* -----------------------------------------
+     LIMPIAR MENSAJES
+  ----------------------------------------- */
 
   const clearFeedback = () => {
     setError("");
     setMessage("");
   };
 
+  /* -----------------------------------------
+     CAMBIAR LOGIN / REGISTRO
+  ----------------------------------------- */
+
   const switchMode = (nextMode) => {
     setMode(nextMode);
+
     setPassword("");
+
     clearFeedback();
   };
 
-  const validEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  /* -----------------------------------------
+     VALIDAR EMAIL
+  ----------------------------------------- */
 
-  /* ---------------------------------------------------------
-     REGISTRAR O INICIAR SESIÓN
-  --------------------------------------------------------- */
+  const validEmail = (value) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      value
+    );
+  };
 
-  const handleSubmit = async (e) => {
+  /* -----------------------------------------
+     INGRESAR / CREAR CUENTA
+  ----------------------------------------- */
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+
     clearFeedback();
 
-    if (submitting) return;
+    const cleanEmail =
+      email.trim().toLowerCase();
 
-    const cleanEmail = email.trim().toLowerCase();
-
-    if (!validEmail(cleanEmail)) {
-      setError("Escribe un correo electrónico válido.");
-      return;
-    }
-
-    if (!password) {
-      setError("Escribe tu contraseña.");
-      return;
-    }
+    /* CREAR CUENTA */
 
     if (mode === "register") {
       if (name.trim().length < 2) {
-        setError("Escribe tu nombre para crear la cuenta.");
+        setError(
+          "Escribe tu nombre para crear la cuenta."
+        );
+
+        return;
+      }
+
+      if (!validEmail(cleanEmail)) {
+        setError(
+          "Escribe un correo electrónico válido."
+        );
+
         return;
       }
 
@@ -180,117 +250,162 @@ function AuthScreen({ onEnter }) {
         setError(
           "La contraseña debe tener al menos 6 caracteres."
         );
-        return;
-      }
-    }
-
-    setSubmitting(true);
-
-    try {
-      if (mode === "register") {
-        const { data, error } = await supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-          options: {
-            data: {
-              display_name: name.trim(),
-            },
-          },
-        });
-
-        if (error) throw error;
-
-        if (data.session && data.user) {
-          onEnter({
-            id: data.user.id,
-            name:
-              data.user.user_metadata?.display_name ||
-              name.trim(),
-            email: data.user.email,
-          });
-        } else {
-          setMessage(
-            "Cuenta creada. Revisa tu correo para confirmar el registro antes de ingresar."
-          );
-          setMode("login");
-          setPassword("");
-        }
 
         return;
       }
 
-      const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password,
-        });
-
-      if (error) throw error;
-
-      const { data: profile, error: profileError } =
-        await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", data.user.id)
-          .maybeSingle();
-
-      if (profileError) throw profileError;
-
-      onEnter({
-        id: data.user.id,
-        name:
-          profile?.display_name ||
-          data.user.user_metadata?.display_name ||
-          data.user.email,
-        email: data.user.email,
-      });
-    } catch (err) {
-      setError(
-        err.message ||
-          "No se pudo completar la operación."
+      const users = JSON.parse(
+        localStorage.getItem(
+          "mente360_users"
+        ) || "[]"
       );
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
-  /* ---------------------------------------------------------
-     RECUPERACIÓN DE CONTRASEÑA
-  --------------------------------------------------------- */
+      const alreadyExists =
+        users.some(
+          (user) =>
+            user.email === cleanEmail
+        );
 
-  const handleForgotPassword = async () => {
-    clearFeedback();
+      if (alreadyExists) {
+        setError(
+          "Ya existe una cuenta con ese correo. Puedes ingresar."
+        );
 
-    const cleanEmail = email.trim().toLowerCase();
+        return;
+      }
 
-    if (!validEmail(cleanEmail)) {
-      setError("Primero escribe tu correo electrónico.");
+      const user = {
+        name: name.trim(),
+        email: cleanEmail,
+        password,
+      };
+
+      localStorage.setItem(
+        "mente360_users",
+        JSON.stringify([
+          ...users,
+          user,
+        ])
+      );
+
+      if (remember) {
+        localStorage.setItem(
+          "mente360_session",
+          JSON.stringify(user)
+        );
+      } else {
+        sessionStorage.setItem(
+          "mente360_session",
+          JSON.stringify(user)
+        );
+      }
+
+      onEnter(user);
+
       return;
     }
 
-    try {
-      const { error } =
-        await supabase.auth.resetPasswordForEmail(
-          cleanEmail,
-          {
-            redirectTo: window.location.origin,
-          }
-        );
+    /* INGRESAR */
 
-      if (error) throw error;
-
-      setMessage(
-        "Si el correo corresponde a una cuenta, recibirás instrucciones para restablecer la contraseña."
-      );
-    } catch {
+    if (!validEmail(cleanEmail)) {
       setError(
-        "No se pudo solicitar la recuperación. Revisa la configuración del correo y las URL permitidas en Supabase."
+        "Escribe un correo electrónico válido."
+      );
+
+      return;
+    }
+
+    if (!password) {
+      setError(
+        "Escribe tu contraseña."
+      );
+
+      return;
+    }
+
+    const users = JSON.parse(
+      localStorage.getItem(
+        "mente360_users"
+      ) || "[]"
+    );
+
+    const user =
+      users.find(
+        (item) =>
+          item.email ===
+            cleanEmail &&
+          item.password ===
+            password
+      );
+
+    if (!user) {
+      setError(
+        "El correo o la contraseña no son correctos."
+      );
+
+      return;
+    }
+
+    if (remember) {
+      localStorage.setItem(
+        "mente360_session",
+        JSON.stringify(user)
+      );
+    } else {
+      sessionStorage.setItem(
+        "mente360_session",
+        JSON.stringify(user)
+      );
+    }
+
+    onEnter(user);
+  };
+
+  /* -----------------------------------------
+     RECUPERAR CONTRASEÑA
+  ----------------------------------------- */
+
+  const handleForgotPassword = () => {
+    clearFeedback();
+
+    const cleanEmail =
+      email.trim().toLowerCase();
+
+    if (!validEmail(cleanEmail)) {
+      setError(
+        "Primero escribe tu correo electrónico."
+      );
+
+      return;
+    }
+
+    const users = JSON.parse(
+      localStorage.getItem(
+        "mente360_users"
+      ) || "[]"
+    );
+
+    const exists =
+      users.some(
+        (user) =>
+          user.email ===
+          cleanEmail
+      );
+
+    if (exists) {
+      setMessage(
+        "La recuperación de contraseña quedará conectada al correo cuando tengamos autenticación real."
+      );
+    } else {
+      setMessage(
+        "No encontramos una cuenta local con ese correo."
       );
     }
   };
 
   return (
     <div className="auth-page">
+
       <div className="auth-decoration auth-decoration-one">
         ✦
       </div>
@@ -303,27 +418,42 @@ function AuthScreen({ onEnter }) {
         ✧
       </div>
 
-      {/* PARTE IZQUIERDA */}
+      {/* =====================================
+          PARTE IZQUIERDA
+      ===================================== */}
 
       <section className="auth-visual">
+
         <div className="auth-brand">
           <Logo />
         </div>
 
         <div className="auth-illustration">
-          <div className="auth-orbit">◜　　◝</div>
 
-          <div className="auth-brain-emoji">🧠</div>
+          <div className="auth-orbit">
+            ◜　　◝
+          </div>
 
-          <div className="auth-heart">♥</div>
+          <div className="auth-brain-emoji">
+            🧠
+          </div>
 
-          <div className="auth-cloud">☁️</div>
+          <div className="auth-heart">
+            ♥
+          </div>
+
+          <div className="auth-cloud">
+            ☁️
+          </div>
+
         </div>
 
         <h1>
           Tu bienestar,
           <br />
-          <span>en un solo lugar.</span>
+          <span>
+            en un solo lugar.
+          </span>
         </h1>
 
         <p>
@@ -338,13 +468,20 @@ function AuthScreen({ onEnter }) {
           <i />
           <i />
         </div>
+
       </section>
 
-      {/* FORMULARIO */}
+      {/* =====================================
+          FORMULARIO
+      ===================================== */}
 
       <section className="auth-card">
+
         <div className="auth-heading">
-          <span className="welcome-icon">💜</span>
+
+          <span className="welcome-icon">
+            💜
+          </span>
 
           <h2>
             {mode === "login"
@@ -357,78 +494,131 @@ function AuthScreen({ onEnter }) {
               ? "Ingresa para continuar cuidando tu bienestar."
               : "Comienza tu camino hacia un mayor bienestar."}
           </p>
+
         </div>
 
-        {/* PESTAÑAS */}
+        {/* TABS */}
 
         <div className="auth-tabs">
+
           <button
-            type="button"
-            className={mode === "login" ? "active" : ""}
-            onClick={() => switchMode("login")}
+            className={
+              mode === "login"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              switchMode("login")
+            }
           >
             Ingresar
           </button>
 
           <button
-            type="button"
-            className={mode === "register" ? "active" : ""}
-            onClick={() => switchMode("register")}
+            className={
+              mode === "register"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              switchMode("register")
+            }
           >
             Crear cuenta
           </button>
+
         </div>
 
-        <form onSubmit={handleSubmit} noValidate>
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+        >
+
           {/* NOMBRE */}
 
           {mode === "register" && (
             <label className="field">
-              <span>Nombre</span>
+
+              <span>
+                Nombre
+              </span>
 
               <div>
+
                 <UserRound size={18} />
 
                 <input
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) =>
+                    setName(
+                      e.target.value
+                    )
+                  }
                   placeholder="¿Cómo te llamas?"
                   autoComplete="name"
                 />
+
               </div>
+
             </label>
           )}
 
-          {/* CORREO */}
+          {/* EMAIL */}
 
           <label className="field">
-            <span>Correo electrónico</span>
+
+            <span>
+              Correo electrónico
+            </span>
 
             <div>
-              <span className="field-symbol">✉</span>
+
+              <span className="field-symbol">
+                ✉
+              </span>
 
               <input
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>
+                  setEmail(
+                    e.target.value
+                  )
+                }
                 type="email"
                 placeholder="tu@correo.com"
                 autoComplete="email"
               />
+
             </div>
+
           </label>
 
-          {/* CONTRASEÑA */}
+          {/* PASSWORD */}
 
           <label className="field">
-            <span>Contraseña</span>
+
+            <span>
+              Contraseña
+            </span>
 
             <div>
-              <span className="field-symbol">🔒</span>
+
+              <span className="field-symbol">
+                🔒
+              </span>
 
               <input
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type={showPassword ? "text" : "password"}
+                onChange={(e) =>
+                  setPassword(
+                    e.target.value
+                  )
+                }
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
                 placeholder="Tu contraseña"
                 autoComplete={
                   mode === "login"
@@ -441,82 +631,101 @@ function AuthScreen({ onEnter }) {
                 type="button"
                 className="show-password"
                 onClick={() =>
-                  setShowPassword((value) => !value)
+                  setShowPassword(
+                    (value) =>
+                      !value
+                  )
                 }
               >
-                {showPassword ? "Ocultar" : "Ver"}
+                {showPassword
+                  ? "Ocultar"
+                  : "Ver"}
               </button>
+
             </div>
+
           </label>
 
-          {/* OPCIONES DE INGRESO */}
+          {/* OPCIONES */}
 
           {mode === "login" && (
             <div className="auth-options">
+
               <label>
+
                 <input
                   type="checkbox"
                   checked={remember}
                   onChange={(e) =>
-                    setRemember(e.target.checked)
+                    setRemember(
+                      e.target.checked
+                    )
                   }
                 />
 
-                <span>Recordarme</span>
+                <span>
+                  Recordarme
+                </span>
+
               </label>
 
               <button
                 type="button"
-                onClick={handleForgotPassword}
+                onClick={
+                  handleForgotPassword
+                }
               >
                 ¿Olvidaste tu contraseña?
               </button>
+
             </div>
           )}
 
-          {/* MENSAJES */}
+          {/* ERROR */}
 
           {error && (
-            <div className="auth-feedback error" role="alert">
+            <div className="auth-feedback error">
               ⚠️ {error}
             </div>
           )}
 
+          {/* MENSAJE */}
+
           {message && (
-            <div className="auth-feedback success" role="status">
+            <div className="auth-feedback success">
               💜 {message}
             </div>
           )}
 
-          {/* BOTÓN PRINCIPAL */}
+          {/* BOTÓN */}
 
           <button
             className="primary-auth-button"
             type="submit"
-            disabled={submitting}
           >
-            {submitting
-              ? "Procesando..."
-              : mode === "login"
-                ? "Ingresar a Mente360"
-                : "Crear mi cuenta"}
+            {mode === "login"
+              ? "Ingresar a Mente360"
+              : "Crear mi cuenta"}
 
-            {!submitting && <ChevronRight size={18} />}
+            <ChevronRight size={18} />
           </button>
+
         </form>
 
         {/* CAMBIAR MODO */}
 
         <p className="auth-switch">
+
           {mode === "login"
             ? "¿Aún no tienes una cuenta?"
             : "¿Ya tienes una cuenta?"}
 
           <button
-            type="button"
             onClick={() =>
               switchMode(
-                mode === "login" ? "register" : "login"
+                mode === "login"
+                  ? "register"
+                  : "login"
               )
             }
           >
@@ -524,12 +733,16 @@ function AuthScreen({ onEnter }) {
               ? " Crear cuenta"
               : " Ingresar"}
           </button>
+
         </p>
 
         <p className="privacy-note">
-          🔒 Tu información personal se mantiene privada y segura.
+          🔒 Tu información personal
+          se mantiene privada y segura.
         </p>
+
       </section>
+
     </div>
   );
 }
@@ -538,8 +751,13 @@ function AuthScreen({ onEnter }) {
    DASHBOARD
 ========================================================= */
 
-function Dashboard({ user, onLogout }) {
+function Dashboard({
+  user,
+  onLogout,
+}) {
+
   const [activeSection, setActiveSection] = useState("Inicio");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -556,8 +774,7 @@ function Dashboard({ user, onLogout }) {
       section: "Manejo del estrés y ansiedad",
       description: "Ejercicios y técnicas para tu calma.",
       icon: Zap,
-      keywords:
-        "estres estrés ansiedad calma relajacion relajación respiracion respiración",
+      keywords: "estres estrés ansiedad calma relajacion relajación respiracion respiración",
     },
     {
       label: "Autoestima",
@@ -571,8 +788,7 @@ function Dashboard({ user, onLogout }) {
       section: "Relaciones",
       description: "Mejora tu comunicación y tus vínculos.",
       icon: Users,
-      keywords:
-        "relaciones comunicacion comunicación amistades limites límites conflictos",
+      keywords: "relaciones comunicacion comunicación amistades limites límites conflictos",
     },
     {
       label: "Bullying y violencia",
@@ -586,24 +802,21 @@ function Dashboard({ user, onLogout }) {
       section: "Estrés académico",
       description: "Organiza tu tiempo y estudia mejor.",
       icon: BookOpen,
-      keywords:
-        "estres estrés academico académico estudios estudiar tareas tiempo",
+      keywords: "estres estrés academico académico estudios estudiar tareas tiempo",
     },
     {
       label: "Redes sociales",
       section: "Redes sociales",
       description: "Usa las redes de forma saludable.",
       icon: Smartphone,
-      keywords:
-        "redes sociales celular comparacion comparación descanso digital contenido",
+      keywords: "redes sociales celular comparacion comparación descanso digital contenido",
     },
     {
       label: "Bienestar diario",
       section: "Bienestar diario",
       description: "Cuida tus hábitos y tu energía.",
       icon: Moon,
-      keywords:
-        "bienestar diario habitos hábitos sueño sueno movimiento alimentacion alimentación",
+      keywords: "bienestar diario habitos hábitos sueño sueno movimiento alimentacion alimentación",
     },
     {
       label: "Diario emocional",
@@ -631,16 +844,14 @@ function Dashboard({ user, onLogout }) {
       section: "Necesito ayuda",
       description: "Encuentra orientación, apoyo y opciones de ayuda.",
       icon: CircleHelp,
-      keywords:
-        "ayuda apoyo psicologo psicólogo lineas líneas instituciones",
+      keywords: "ayuda apoyo psicologo psicólogo lineas líneas instituciones",
     },
     {
       label: "Perfil",
       section: "Perfil",
       description: "Consulta tu información y bienestar.",
       icon: UserRound,
-      keywords:
-        "perfil cuenta configuracion configuración seguridad informacion información",
+      keywords: "perfil cuenta configuracion configuración seguridad informacion información",
     },
   ];
 
@@ -648,7 +859,7 @@ function Dashboard({ user, onLogout }) {
     value
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+      .replace(/[\\u0300-\\u036f]/g, "");
 
   const query = normalizeSearch(searchTerm.trim());
 
@@ -668,73 +879,95 @@ function Dashboard({ user, onLogout }) {
   };
 
   const renderSection = () => {
-    const props = {
-      onBack: () => goToSection("Inicio"),
-      user,
-      onLogout,
-    };
+    const props = { onBack: () => goToSection("Inicio"), user, onLogout };
 
     switch (activeSection) {
       case "¿Cómo me siento?":
         return <ComoMeSiento {...props} />;
-
       case "Manejo del estrés y ansiedad":
         return <ManejoEstres {...props} />;
-
       case "Autoestima":
         return <Autoestima {...props} />;
-
       case "Relaciones":
         return <Relaciones {...props} />;
-
       case "Bullying y violencia":
         return <Bullying {...props} />;
-
       case "Estrés académico":
         return <EstresAcademico {...props} />;
-
       case "Redes sociales":
         return <RedesSociales {...props} />;
-
       case "Bienestar diario":
         return <BienestarDiario {...props} />;
-
       case "Diario emocional":
         return <DiarioEmocional {...props} />;
-
       case "Mapa de bienestar":
         return <MapaBienestar {...props} />;
-
       case "Test de bienestar":
         return <TestBienestar {...props} />;
-
       case "Perfil":
         return <Perfil {...props} />;
-
       case "Necesito ayuda":
         return <NecesitoAyuda {...props} />;
-
       default:
         return null;
     }
   };
 
+  const [
+    selectedMood,
+    setSelectedMood,
+  ] = useState(null);
+
+  const [
+    savedMood,
+    setSavedMood,
+  ] = useState(() => {
+    try {
+      const saved = localStorage.getItem("mente360_mood");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const registerMood = () => {
+    if (!selectedMood) return;
+
+    const moodData = {
+      mood: selectedMood,
+      date: new Date().toISOString(),
+    };
+
+    localStorage.setItem(
+      "mente360_mood",
+      JSON.stringify(moodData)
+    );
+
+    setSavedMood(moodData);
+  };
+
   return (
     <div className="app-shell">
+
+      {/* MAIN */}
+
       <main className="main">
-        {/* BARRA SUPERIOR */}
+
+        {/* TOPBAR */}
 
         <header className="topbar">
+
           <div className="desktop-logo">
             <Logo compact />
           </div>
 
-          {/* BUSCADOR */}
-
           <div
             className="search"
-            style={{ position: "relative" }}
+            style={{
+              position: "relative",
+            }}
           >
+
             <Search size={19} />
 
             <input
@@ -745,17 +978,16 @@ function Dashboard({ user, onLogout }) {
                 setSearchOpen(Boolean(value.trim()));
               }}
               onFocus={() => {
-                if (searchTerm.trim()) setSearchOpen(true);
+                if (searchTerm.trim()) {
+                  setSearchOpen(true);
+                }
               }}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   setSearchOpen(false);
                 }
 
-                if (
-                  e.key === "Enter" &&
-                  searchResults.length > 0
-                ) {
+                if (e.key === "Enter" && searchResults.length > 0) {
                   e.preventDefault();
                   goToSection(searchResults[0].section);
                   setSearchTerm("");
@@ -783,6 +1015,7 @@ function Dashboard({ user, onLogout }) {
                   overflowY: "auto",
                 }}
               >
+
                 {searchResults.length > 0 ? (
                   searchResults.map((item) => {
                     const Icon = item.icon;
@@ -817,6 +1050,7 @@ function Dashboard({ user, onLogout }) {
                           e.currentTarget.style.background = "transparent";
                         }}
                       >
+
                         <span
                           style={{
                             width: 36,
@@ -832,7 +1066,12 @@ function Dashboard({ user, onLogout }) {
                           <Icon size={18} />
                         </span>
 
-                        <span style={{ minWidth: 0, flex: 1 }}>
+                        <span
+                          style={{
+                            minWidth: 0,
+                            flex: 1,
+                          }}
+                        >
                           <strong
                             style={{
                               display: "block",
@@ -857,6 +1096,7 @@ function Dashboard({ user, onLogout }) {
                         </span>
 
                         <ChevronRight size={17} />
+
                       </button>
                     );
                   })
@@ -872,54 +1112,69 @@ function Dashboard({ user, onLogout }) {
                     No encontramos una sección con ese nombre.
                   </div>
                 )}
+
               </div>
             )}
+
           </div>
 
-          {/* ACCIONES */}
-
           <div className="top-actions">
-            <button
-              className="icon-button"
-              type="button"
-              aria-label="Notificaciones"
-            >
+
+            <button className="icon-button">
+
               <Bell size={21} />
+
               <i />
+
             </button>
 
             <button
               className="profile-button"
-              type="button"
               onClick={onLogout}
               title="Cerrar sesión"
             >
-              <div className="avatar">🧑🏻‍🎨</div>
+
+              <div className="avatar">
+                🧑🏻‍🎨
+              </div>
 
               <span>
                 {user?.name
-                  ? `¡Hola, ${user.name.split(" ")[0]}!`
+                  ? `¡Hola, ${
+                      user.name.split(
+                        " "
+                      )[0]
+                    }!`
                   : "¡Hola!"}
               </span>
 
-              <ChevronRight size={17} />
-            </button>
-          </div>
-        </header>
+              <ChevronRight
+                size={17}
+              />
 
-        {/* CONTENIDO PRINCIPAL */}
+            </button>
+
+          </div>
+
+        </header>
 
         {activeSection === "Inicio" ? (
           <>
             {/* HERO */}
 
             <section className="hero">
+
               <div className="hero-copy">
-                <div className="sparkles">✦　✧　✦</div>
+
+                <div className="sparkles">
+                  ✦　✧　✦
+                </div>
 
                 <h1>
                   Mente
-                  <span>360</span>
+                  <span>
+                    360
+                  </span>
                 </h1>
 
                 <p>
@@ -931,35 +1186,48 @@ function Dashboard({ user, onLogout }) {
                 <div className="heart-line">
                   ━━　♡　━━
                 </div>
+
               </div>
 
               <div className="hero-brain">
-                <div className="orbit">◜　　　　　　◝</div>
+
+                <div className="orbit">
+                  ◜　　　　　　◝
+                </div>
 
                 <div className="brain-face">
+
                   🧠
 
                   <Heart
                     className="brain-heart"
                     fill="currentColor"
                   />
+
                 </div>
+
               </div>
 
               <div className="hero-bubble">
+
                 <strong>
                   Tu bienestar,
                   <br />
                   en un solo lugar
                 </strong>
 
-                <span>♡</span>
+                <span>
+                  ♡
+                </span>
+
               </div>
+
             </section>
 
-            {/* TARJETAS */}
+            {/* HERRAMIENTAS */}
 
             <section className="tools-section">
+
               <div className="title-decor">
                 <span>✧</span>
                 <h2>Explora Mente360</h2>
@@ -967,6 +1235,7 @@ function Dashboard({ user, onLogout }) {
               </div>
 
               <div className="tools-grid">
+
                 {tools.map(([title, desc, Icon, tone]) => (
                   <button
                     className={`tool-card ${tone}`}
@@ -988,29 +1257,25 @@ function Dashboard({ user, onLogout }) {
                   </button>
                 ))}
 
-                <button
-                  type="button"
-                  className="help-support-card"
-                  onClick={() => goToSection("Necesito ayuda")}
-                  aria-label="Abrir Necesito ayuda"
-                >
-                  <div className="help-support-icon">
-                    <Heart size={27} />
-                  </div>
+              <button
+                type="button"
+                className="help-support-card"
+                onClick={() => goToSection("Necesito ayuda")}
+                aria-label="Abrir Necesito ayuda"
+              >
+                <div className="help-support-icon">
+                  <Heart size={27} />
+                </div>
+                <div className="help-support-text">
+                  <strong>¿Necesitas ayuda?</strong>
+                  <span>Encuentra orientación, apoyo y opciones para pedir ayuda.</span>
+                </div>
+                <ChevronRight size={21} />
+              </button>
 
-                  <div className="help-support-text">
-                    <strong>¿Necesitas ayuda?</strong>
-                    <span>
-                      Encuentra orientación, apoyo y opciones para pedir ayuda.
-                    </span>
-                  </div>
-
-                  <ChevronRight size={21} />
-                </button>
               </div>
-            </section>
 
-            <EstadisticasPublicas />
+            </section>
           </>
         ) : (
           <div className="section-route" id="section-content">
@@ -1018,27 +1283,39 @@ function Dashboard({ user, onLogout }) {
           </div>
         )}
 
-        {/* BANNER INFERIOR */}
+        {/* BANNER */}
 
         <section className="bottom-banner">
-          <div className="plant">🌱</div>
+
+          <div className="plant">
+            🌱
+          </div>
 
           <div>
+
             <strong>
               Tu salud mental también
               es importante
             </strong>
 
-            <div>━━　♡　━━</div>
+            <div>
+              ━━　♡　━━
+            </div>
+
           </div>
 
-          <div className="cloud-small">☁️</div>
+          <div className="cloud-small">
+            ☁️
+          </div>
+
         </section>
+
       </main>
 
-      {/* NAVEGACIÓN INFERIOR */}
+      {/* NAV INFERIOR */}
 
       <nav className="mobile-nav">
+
         <button
           className={activeSection === "Inicio" ? "selected" : ""}
           type="button"
@@ -1050,9 +1327,7 @@ function Dashboard({ user, onLogout }) {
 
         <button
           type="button"
-          className={
-            activeSection === "Test de bienestar" ? "selected" : ""
-          }
+          className={activeSection === "Test de bienestar" ? "selected" : ""}
           onClick={() => goToSection("Test de bienestar")}
         >
           <Zap />
@@ -1061,9 +1336,7 @@ function Dashboard({ user, onLogout }) {
 
         <button
           type="button"
-          className={
-            activeSection === "Mapa de bienestar" ? "selected" : ""
-          }
+          className={activeSection === "Mapa de bienestar" ? "selected" : ""}
           onClick={() => goToSection("Mapa de bienestar")}
         >
           <BookOpen />
@@ -1079,117 +1352,63 @@ function Dashboard({ user, onLogout }) {
           <UserRound />
           <span>Perfil</span>
         </button>
+
       </nav>
+
     </div>
   );
 }
 
 /* =========================================================
-   APLICACIÓN PRINCIPAL Y SESIÓN DE SUPABASE
+   APP PRINCIPAL
 ========================================================= */
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
+  const saved =
+    localStorage.getItem(
+      "mente360_session"
+    );
 
-    const loadUser = async (session) => {
-      if (!session?.user) {
-        if (mounted) setUser(null);
-        return;
-      }
+  const temporary =
+    sessionStorage.getItem(
+      "mente360_session"
+    );
 
-      const authUser = session.user;
+  const initialUser = saved
+    ? JSON.parse(saved)
+    : temporary
+      ? JSON.parse(temporary)
+      : null;
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", authUser.id)
-        .maybeSingle();
+  const [user, setUser] =
+    useState(initialUser);
 
-      if (!mounted) return;
+  /* -----------------------------------------
+     CERRAR SESIÓN
+  ----------------------------------------- */
 
-      if (error) {
-        console.error("No se pudo cargar el perfil:", error);
-      }
+  const logout = () => {
 
-      setUser({
-        id: authUser.id,
-        name:
-          profile?.display_name ||
-          authUser.user_metadata?.display_name ||
-          authUser.email,
-        email: authUser.email,
-      });
-    };
+    localStorage.removeItem(
+      "mente360_session"
+    );
 
-    const initialize = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-
-        if (error) throw error;
-
-        await loadUser(data.session);
-      } catch (err) {
-        console.error("No se pudo recuperar la sesión:", err);
-
-        if (mounted) setUser(null);
-      } finally {
-        if (mounted) setAuthLoading(false);
-      }
-    };
-
-    initialize();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Ejecuta la consulta después de finalizar el callback de auth.
-      Promise.resolve().then(async () => {
-        if (!mounted) return;
-
-        try {
-          await loadUser(session);
-        } catch (err) {
-          console.error("No se pudo actualizar la sesión:", err);
-        } finally {
-          if (mounted) setAuthLoading(false);
-        }
-      });
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  /* CERRAR SESIÓN */
-
-  const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      console.error("No se pudo cerrar la sesión:", error);
-      return;
-    }
+    sessionStorage.removeItem(
+      "mente360_session"
+    );
 
     setUser(null);
   };
 
-  if (authLoading) {
-    return (
-      <div className="auth-page">
-        <p>Cargando Mente360...</p>
-      </div>
-    );
-  }
-
   return user ? (
-    <Dashboard user={user} onLogout={logout} />
+    <Dashboard
+      user={user}
+      onLogout={logout}
+    />
   ) : (
-    <AuthScreen onEnter={setUser} />
+    <AuthScreen
+      onEnter={setUser}
+    />
   );
 }
