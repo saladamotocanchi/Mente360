@@ -2762,3 +2762,127 @@ main {
   margin-top: 0;
   box-sizing: border-box;
 }
+
+/* Paso 22 — contenido interno de Manejo del estrés y la ansiedad */
+.stress-card {
+  border: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.stress-detail-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.stress-detail-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+}
+.stress-detail-icon.breathing { color: #4d91b2; background: #d7efff; }
+.stress-detail-icon.relax { color: #7561d8; background: #e2dcff; }
+.stress-detail-icon.active { color: #4e9b67; background: #d9f2df; }
+.stress-detail-icon.tips { color: #a98235; background: #ffebb9; }
+.stress-detail-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px;
+  border-radius: 26px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(110,95,160,.10);
+  box-shadow: 0 12px 30px rgba(80,65,130,.08);
+}
+.stress-detail-kicker {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #7561d8;
+  font-size: 12px;
+  font-weight: 900;
+}
+.stress-detail-card h1 {
+  margin: 0 0 9px;
+  color: #30345d;
+  font-size: clamp(25px, 5vw, 34px);
+  line-height: 1.12;
+}
+.stress-detail-intro {
+  margin: 0 0 24px;
+  color: #747793;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 600;
+}
+.stress-detail-card h2 {
+  margin: 0 0 12px;
+  color: #3b3d6e;
+  font-size: 18px;
+}
+.stress-detail-steps { display: grid; gap: 10px; }
+.stress-detail-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 13px;
+  border-radius: 17px;
+  background: #faf8ff;
+}
+.stress-detail-step span {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #e9e4ff;
+  color: #51439d;
+  font-size: 12px;
+  font-weight: 900;
+}
+.stress-detail-step p {
+  margin: 4px 0 0;
+  color: #555873;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+.stress-detail-activity {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 19px;
+}
+.stress-detail-activity.breathing { background: #e8f7ff; }
+.stress-detail-activity.relax { background: #f0edff; }
+.stress-detail-activity.active { background: #edf9f0; }
+.stress-detail-activity.tips { background: #fff7e5; }
+.stress-detail-activity-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #51439d;
+  font-size: 14px;
+}
+.stress-detail-activity p {
+  margin: 8px 0 0;
+  color: #5d6078;
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+.stress-detail-back {
+  margin-top: 18px;
+  padding: 11px 15px;
+  border: 0;
+  border-radius: 14px;
+  background: #e9e4ff;
+  color: #51439d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.stress-detail-back:hover { filter: brightness(.98); }

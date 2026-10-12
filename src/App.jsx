@@ -1,5 +1,8 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import { supabase } from "./lib/supabase";
 import "./styles.css";
+
 import ComoMeSiento from "./sections/ComoMeSiento";
 import ManejoEstres from "./sections/ManejoEstres";
 import Autoestima from "./sections/Autoestima";
@@ -13,6 +16,7 @@ import MapaBienestar from "./sections/MapaBienestar";
 import TestBienestar from "./sections/TestBienestar";
 import NecesitoAyuda from "./sections/NecesitoAyuda";
 import Perfil from "./sections/Perfil/Perfil";
+import EstadisticasPublicas from "./sections/EstadisticasPublicas";
 
 import {
   Bell,
@@ -22,7 +26,6 @@ import {
   CircleHelp,
   Heart,
   Home,
-  Menu,
   Moon,
   NotebookPen,
   Search,
@@ -30,46 +33,11 @@ import {
   Smartphone,
   UserRound,
   Users,
-  X,
   Zap,
 } from "lucide-react";
 
 /* =========================================================
-   MENÚ
-========================================================= */
-
-const menuItems = [
-  ["Inicio", Home],
-  ["¿Cómo me siento?", Brain],
-  ["Estrés y ansiedad", Zap],
-  ["Autoestima", Heart],
-  ["Relaciones", Users],
-  ["Bullying y violencia", Shield],
-  ["Estrés académico", BookOpen],
-  ["Redes sociales", Smartphone],
-  ["Bienestar diario", Moon],
-  ["Diario emocional", NotebookPen],
-  ["Mapa de bienestar", BookOpen],
-  ["Necesito ayuda", CircleHelp],
-];
-
-/* =========================================================
-   EMOCIONES
-========================================================= */
-
-const moods = [
-  ["Feliz", "😊", "yellow"],
-  ["Triste", "😢", "blue"],
-  ["Ansioso/a", "😟", "purple"],
-  ["Enojado/a", "😠", "pink"],
-  ["Calmado/a", "😌", "green"],
-  ["Confundido/a", "😕", "violet"],
-  ["Cansado/a", "😴", "gray"],
-  ["Motivado/a", "⭐", "gold"],
-];
-
-/* =========================================================
-   HERRAMIENTAS
+   HERRAMIENTAS DEL INICIO
 ========================================================= */
 
 const tools = [
@@ -127,7 +95,7 @@ const tools = [
     NotebookPen,
     "green",
   ],
- ];
+];
 
 /* =========================================================
    LOGO
@@ -141,13 +109,7 @@ function Logo({ compact = false }) {
       }`}
     >
       <div className="logo-brain">
-        <Brain
-          size={
-            compact
-              ? 25
-              : 34
-          }
-        />
+        <Brain size={compact ? 25 : 34} />
       </div>
 
       <span>
@@ -159,90 +121,58 @@ function Logo({ compact = false }) {
 }
 
 /* =========================================================
-   PANTALLA DE LOGIN
+   AUTENTICACIÓN: REGISTRO E INICIO DE SESIÓN
 ========================================================= */
 
 function AuthScreen({ onEnter }) {
   const [mode, setMode] = useState("login");
-
   const [name, setName] = useState("");
-
   const [email, setEmail] = useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [remember, setRemember] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [message, setMessage] =
-    useState("");
-
-  /* -----------------------------------------
-     LIMPIAR MENSAJES
-  ----------------------------------------- */
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const clearFeedback = () => {
     setError("");
     setMessage("");
   };
 
-  /* -----------------------------------------
-     CAMBIAR LOGIN / REGISTRO
-  ----------------------------------------- */
-
   const switchMode = (nextMode) => {
     setMode(nextMode);
-
     setPassword("");
-
     clearFeedback();
   };
 
-  /* -----------------------------------------
-     VALIDAR EMAIL
-  ----------------------------------------- */
+  const validEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-  const validEmail = (value) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-      value
-    );
-  };
+  /* ---------------------------------------------------------
+     REGISTRAR O INICIAR SESIÓN
+  --------------------------------------------------------- */
 
-  /* -----------------------------------------
-     INGRESAR / CREAR CUENTA
-  ----------------------------------------- */
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     clearFeedback();
 
-    const cleanEmail =
-      email.trim().toLowerCase();
+    if (submitting) return;
 
-    /* CREAR CUENTA */
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!validEmail(cleanEmail)) {
+      setError("Escribe un correo electrónico válido.");
+      return;
+    }
+
+    if (!password) {
+      setError("Escribe tu contraseña.");
+      return;
+    }
 
     if (mode === "register") {
       if (name.trim().length < 2) {
-        setError(
-          "Escribe tu nombre para crear la cuenta."
-        );
-
-        return;
-      }
-
-      if (!validEmail(cleanEmail)) {
-        setError(
-          "Escribe un correo electrónico válido."
-        );
-
+        setError("Escribe tu nombre para crear la cuenta.");
         return;
       }
 
@@ -250,162 +180,117 @@ function AuthScreen({ onEnter }) {
         setError(
           "La contraseña debe tener al menos 6 caracteres."
         );
+        return;
+      }
+    }
+
+    setSubmitting(true);
+
+    try {
+      if (mode === "register") {
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: {
+            data: {
+              display_name: name.trim(),
+            },
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.session && data.user) {
+          onEnter({
+            id: data.user.id,
+            name:
+              data.user.user_metadata?.display_name ||
+              name.trim(),
+            email: data.user.email,
+          });
+        } else {
+          setMessage(
+            "Cuenta creada. Revisa tu correo para confirmar el registro antes de ingresar."
+          );
+          setMode("login");
+          setPassword("");
+        }
 
         return;
       }
 
-      const users = JSON.parse(
-        localStorage.getItem(
-          "mente360_users"
-        ) || "[]"
-      );
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
 
-      const alreadyExists =
-        users.some(
-          (user) =>
-            user.email === cleanEmail
-        );
+      if (error) throw error;
 
-      if (alreadyExists) {
-        setError(
-          "Ya existe una cuenta con ese correo. Puedes ingresar."
-        );
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", data.user.id)
+          .maybeSingle();
 
-        return;
-      }
+      if (profileError) throw profileError;
 
-      const user = {
-        name: name.trim(),
-        email: cleanEmail,
-        password,
-      };
-
-      localStorage.setItem(
-        "mente360_users",
-        JSON.stringify([
-          ...users,
-          user,
-        ])
-      );
-
-      if (remember) {
-        localStorage.setItem(
-          "mente360_session",
-          JSON.stringify(user)
-        );
-      } else {
-        sessionStorage.setItem(
-          "mente360_session",
-          JSON.stringify(user)
-        );
-      }
-
-      onEnter(user);
-
-      return;
-    }
-
-    /* INGRESAR */
-
-    if (!validEmail(cleanEmail)) {
+      onEnter({
+        id: data.user.id,
+        name:
+          profile?.display_name ||
+          data.user.user_metadata?.display_name ||
+          data.user.email,
+        email: data.user.email,
+      });
+    } catch (err) {
       setError(
-        "Escribe un correo electrónico válido."
+        err.message ||
+          "No se pudo completar la operación."
       );
-
-      return;
+    } finally {
+      setSubmitting(false);
     }
-
-    if (!password) {
-      setError(
-        "Escribe tu contraseña."
-      );
-
-      return;
-    }
-
-    const users = JSON.parse(
-      localStorage.getItem(
-        "mente360_users"
-      ) || "[]"
-    );
-
-    const user =
-      users.find(
-        (item) =>
-          item.email ===
-            cleanEmail &&
-          item.password ===
-            password
-      );
-
-    if (!user) {
-      setError(
-        "El correo o la contraseña no son correctos."
-      );
-
-      return;
-    }
-
-    if (remember) {
-      localStorage.setItem(
-        "mente360_session",
-        JSON.stringify(user)
-      );
-    } else {
-      sessionStorage.setItem(
-        "mente360_session",
-        JSON.stringify(user)
-      );
-    }
-
-    onEnter(user);
   };
 
-  /* -----------------------------------------
-     RECUPERAR CONTRASEÑA
-  ----------------------------------------- */
+  /* ---------------------------------------------------------
+     RECUPERACIÓN DE CONTRASEÑA
+  --------------------------------------------------------- */
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
     clearFeedback();
 
-    const cleanEmail =
-      email.trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
 
     if (!validEmail(cleanEmail)) {
-      setError(
-        "Primero escribe tu correo electrónico."
-      );
-
+      setError("Primero escribe tu correo electrónico.");
       return;
     }
 
-    const users = JSON.parse(
-      localStorage.getItem(
-        "mente360_users"
-      ) || "[]"
-    );
+    try {
+      const { error } =
+        await supabase.auth.resetPasswordForEmail(
+          cleanEmail,
+          {
+            redirectTo: window.location.origin,
+          }
+        );
 
-    const exists =
-      users.some(
-        (user) =>
-          user.email ===
-          cleanEmail
-      );
+      if (error) throw error;
 
-    if (exists) {
       setMessage(
-        "La recuperación de contraseña quedará conectada al correo cuando tengamos autenticación real."
+        "Si el correo corresponde a una cuenta, recibirás instrucciones para restablecer la contraseña."
       );
-    } else {
-      setMessage(
-        "No encontramos una cuenta local con ese correo."
+    } catch {
+      setError(
+        "No se pudo solicitar la recuperación. Revisa la configuración del correo y las URL permitidas en Supabase."
       );
     }
   };
 
   return (
     <div className="auth-page">
-
       <div className="auth-decoration auth-decoration-one">
         ✦
       </div>
@@ -418,42 +303,27 @@ function AuthScreen({ onEnter }) {
         ✧
       </div>
 
-      {/* =====================================
-          PARTE IZQUIERDA
-      ===================================== */}
+      {/* PARTE IZQUIERDA */}
 
       <section className="auth-visual">
-
         <div className="auth-brand">
           <Logo />
         </div>
 
         <div className="auth-illustration">
+          <div className="auth-orbit">◜　　◝</div>
 
-          <div className="auth-orbit">
-            ◜　　◝
-          </div>
+          <div className="auth-brain-emoji">🧠</div>
 
-          <div className="auth-brain-emoji">
-            🧠
-          </div>
+          <div className="auth-heart">♥</div>
 
-          <div className="auth-heart">
-            ♥
-          </div>
-
-          <div className="auth-cloud">
-            ☁️
-          </div>
-
+          <div className="auth-cloud">☁️</div>
         </div>
 
         <h1>
           Tu bienestar,
           <br />
-          <span>
-            en un solo lugar.
-          </span>
+          <span>en un solo lugar.</span>
         </h1>
 
         <p>
@@ -468,20 +338,13 @@ function AuthScreen({ onEnter }) {
           <i />
           <i />
         </div>
-
       </section>
 
-      {/* =====================================
-          FORMULARIO
-      ===================================== */}
+      {/* FORMULARIO */}
 
       <section className="auth-card">
-
         <div className="auth-heading">
-
-          <span className="welcome-icon">
-            💜
-          </span>
+          <span className="welcome-icon">💜</span>
 
           <h2>
             {mode === "login"
@@ -494,131 +357,78 @@ function AuthScreen({ onEnter }) {
               ? "Ingresa para continuar cuidando tu bienestar."
               : "Comienza tu camino hacia un mayor bienestar."}
           </p>
-
         </div>
 
-        {/* TABS */}
+        {/* PESTAÑAS */}
 
         <div className="auth-tabs">
-
           <button
-            className={
-              mode === "login"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              switchMode("login")
-            }
+            type="button"
+            className={mode === "login" ? "active" : ""}
+            onClick={() => switchMode("login")}
           >
             Ingresar
           </button>
 
           <button
-            className={
-              mode === "register"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              switchMode("register")
-            }
+            type="button"
+            className={mode === "register" ? "active" : ""}
+            onClick={() => switchMode("register")}
           >
             Crear cuenta
           </button>
-
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-        >
-
+        <form onSubmit={handleSubmit} noValidate>
           {/* NOMBRE */}
 
           {mode === "register" && (
             <label className="field">
-
-              <span>
-                Nombre
-              </span>
+              <span>Nombre</span>
 
               <div>
-
                 <UserRound size={18} />
 
                 <input
                   value={name}
-                  onChange={(e) =>
-                    setName(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="¿Cómo te llamas?"
                   autoComplete="name"
                 />
-
               </div>
-
             </label>
           )}
 
-          {/* EMAIL */}
+          {/* CORREO */}
 
           <label className="field">
-
-            <span>
-              Correo electrónico
-            </span>
+            <span>Correo electrónico</span>
 
             <div>
-
-              <span className="field-symbol">
-                ✉
-              </span>
+              <span className="field-symbol">✉</span>
 
               <input
                 value={email}
-                onChange={(e) =>
-                  setEmail(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setEmail(e.target.value)}
                 type="email"
                 placeholder="tu@correo.com"
                 autoComplete="email"
               />
-
             </div>
-
           </label>
 
-          {/* PASSWORD */}
+          {/* CONTRASEÑA */}
 
           <label className="field">
-
-            <span>
-              Contraseña
-            </span>
+            <span>Contraseña</span>
 
             <div>
-
-              <span className="field-symbol">
-                🔒
-              </span>
+              <span className="field-symbol">🔒</span>
 
               <input
                 value={password}
-                onChange={(e) =>
-                  setPassword(
-                    e.target.value
-                  )
-                }
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
+                onChange={(e) => setPassword(e.target.value)}
+                type={showPassword ? "text" : "password"}
                 placeholder="Tu contraseña"
                 autoComplete={
                   mode === "login"
@@ -631,101 +441,82 @@ function AuthScreen({ onEnter }) {
                 type="button"
                 className="show-password"
                 onClick={() =>
-                  setShowPassword(
-                    (value) =>
-                      !value
-                  )
+                  setShowPassword((value) => !value)
                 }
               >
-                {showPassword
-                  ? "Ocultar"
-                  : "Ver"}
+                {showPassword ? "Ocultar" : "Ver"}
               </button>
-
             </div>
-
           </label>
 
-          {/* OPCIONES */}
+          {/* OPCIONES DE INGRESO */}
 
           {mode === "login" && (
             <div className="auth-options">
-
               <label>
-
                 <input
                   type="checkbox"
                   checked={remember}
                   onChange={(e) =>
-                    setRemember(
-                      e.target.checked
-                    )
+                    setRemember(e.target.checked)
                   }
                 />
 
-                <span>
-                  Recordarme
-                </span>
-
+                <span>Recordarme</span>
               </label>
 
               <button
                 type="button"
-                onClick={
-                  handleForgotPassword
-                }
+                onClick={handleForgotPassword}
               >
                 ¿Olvidaste tu contraseña?
               </button>
-
             </div>
           )}
 
-          {/* ERROR */}
+          {/* MENSAJES */}
 
           {error && (
-            <div className="auth-feedback error">
+            <div className="auth-feedback error" role="alert">
               ⚠️ {error}
             </div>
           )}
 
-          {/* MENSAJE */}
-
           {message && (
-            <div className="auth-feedback success">
+            <div className="auth-feedback success" role="status">
               💜 {message}
             </div>
           )}
 
-          {/* BOTÓN */}
+          {/* BOTÓN PRINCIPAL */}
 
           <button
             className="primary-auth-button"
             type="submit"
+            disabled={submitting}
           >
-            {mode === "login"
-              ? "Ingresar a Mente360"
-              : "Crear mi cuenta"}
+            {submitting
+              ? "Procesando..."
+              : mode === "login"
+                ? "Ingresar a Mente360"
+                : "Crear mi cuenta"}
 
-            <ChevronRight size={18} />
+            {!submitting && <ChevronRight size={18} />}
           </button>
-
         </form>
 
         {/* CAMBIAR MODO */}
 
         <p className="auth-switch">
-
           {mode === "login"
             ? "¿Aún no tienes una cuenta?"
             : "¿Ya tienes una cuenta?"}
 
           <button
+            type="button"
             onClick={() =>
               switchMode(
-                mode === "login"
-                  ? "register"
-                  : "login"
+                mode === "login" ? "register" : "login"
               )
             }
           >
@@ -733,16 +524,12 @@ function AuthScreen({ onEnter }) {
               ? " Crear cuenta"
               : " Ingresar"}
           </button>
-
         </p>
 
         <p className="privacy-note">
-          🔒 Tu información personal
-          se mantiene privada y segura.
+          🔒 Tu información personal se mantiene privada y segura.
         </p>
-
       </section>
-
     </div>
   );
 }
@@ -751,13 +538,8 @@ function AuthScreen({ onEnter }) {
    DASHBOARD
 ========================================================= */
 
-function Dashboard({
-  user,
-  onLogout,
-}) {
-
+function Dashboard({ user, onLogout }) {
   const [activeSection, setActiveSection] = useState("Inicio");
-
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -774,7 +556,8 @@ function Dashboard({
       section: "Manejo del estrés y ansiedad",
       description: "Ejercicios y técnicas para tu calma.",
       icon: Zap,
-      keywords: "estres estrés ansiedad calma relajacion relajación respiracion respiración",
+      keywords:
+        "estres estrés ansiedad calma relajacion relajación respiracion respiración",
     },
     {
       label: "Autoestima",
@@ -788,7 +571,8 @@ function Dashboard({
       section: "Relaciones",
       description: "Mejora tu comunicación y tus vínculos.",
       icon: Users,
-      keywords: "relaciones comunicacion comunicación amistades limites límites conflictos",
+      keywords:
+        "relaciones comunicacion comunicación amistades limites límites conflictos",
     },
     {
       label: "Bullying y violencia",
@@ -802,21 +586,24 @@ function Dashboard({
       section: "Estrés académico",
       description: "Organiza tu tiempo y estudia mejor.",
       icon: BookOpen,
-      keywords: "estres estrés academico académico estudios estudiar tareas tiempo",
+      keywords:
+        "estres estrés academico académico estudios estudiar tareas tiempo",
     },
     {
       label: "Redes sociales",
       section: "Redes sociales",
       description: "Usa las redes de forma saludable.",
       icon: Smartphone,
-      keywords: "redes sociales celular comparacion comparación descanso digital contenido",
+      keywords:
+        "redes sociales celular comparacion comparación descanso digital contenido",
     },
     {
       label: "Bienestar diario",
       section: "Bienestar diario",
       description: "Cuida tus hábitos y tu energía.",
       icon: Moon,
-      keywords: "bienestar diario habitos hábitos sueño sueno movimiento alimentacion alimentación",
+      keywords:
+        "bienestar diario habitos hábitos sueño sueno movimiento alimentacion alimentación",
     },
     {
       label: "Diario emocional",
@@ -844,14 +631,16 @@ function Dashboard({
       section: "Necesito ayuda",
       description: "Encuentra orientación, apoyo y opciones de ayuda.",
       icon: CircleHelp,
-      keywords: "ayuda apoyo psicologo psicólogo lineas líneas instituciones",
+      keywords:
+        "ayuda apoyo psicologo psicólogo lineas líneas instituciones",
     },
     {
       label: "Perfil",
       section: "Perfil",
       description: "Consulta tu información y bienestar.",
       icon: UserRound,
-      keywords: "perfil cuenta configuracion configuración seguridad informacion información",
+      keywords:
+        "perfil cuenta configuracion configuración seguridad informacion información",
     },
   ];
 
@@ -859,7 +648,7 @@ function Dashboard({
     value
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\\u0300-\\u036f]/g, "");
+      .replace(/[\u0300-\u036f]/g, "");
 
   const query = normalizeSearch(searchTerm.trim());
 
@@ -879,95 +668,73 @@ function Dashboard({
   };
 
   const renderSection = () => {
-    const props = { onBack: () => goToSection("Inicio"), user, onLogout };
+    const props = {
+      onBack: () => goToSection("Inicio"),
+      user,
+      onLogout,
+    };
 
     switch (activeSection) {
       case "¿Cómo me siento?":
         return <ComoMeSiento {...props} />;
+
       case "Manejo del estrés y ansiedad":
         return <ManejoEstres {...props} />;
+
       case "Autoestima":
         return <Autoestima {...props} />;
+
       case "Relaciones":
         return <Relaciones {...props} />;
+
       case "Bullying y violencia":
         return <Bullying {...props} />;
+
       case "Estrés académico":
         return <EstresAcademico {...props} />;
+
       case "Redes sociales":
         return <RedesSociales {...props} />;
+
       case "Bienestar diario":
         return <BienestarDiario {...props} />;
+
       case "Diario emocional":
         return <DiarioEmocional {...props} />;
+
       case "Mapa de bienestar":
         return <MapaBienestar {...props} />;
+
       case "Test de bienestar":
         return <TestBienestar {...props} />;
+
       case "Perfil":
         return <Perfil {...props} />;
+
       case "Necesito ayuda":
         return <NecesitoAyuda {...props} />;
+
       default:
         return null;
     }
   };
 
-  const [
-    selectedMood,
-    setSelectedMood,
-  ] = useState(null);
-
-  const [
-    savedMood,
-    setSavedMood,
-  ] = useState(() => {
-    try {
-      const saved = localStorage.getItem("mente360_mood");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const registerMood = () => {
-    if (!selectedMood) return;
-
-    const moodData = {
-      mood: selectedMood,
-      date: new Date().toISOString(),
-    };
-
-    localStorage.setItem(
-      "mente360_mood",
-      JSON.stringify(moodData)
-    );
-
-    setSavedMood(moodData);
-  };
-
   return (
     <div className="app-shell">
-
-      {/* MAIN */}
-
       <main className="main">
-
-        {/* TOPBAR */}
+        {/* BARRA SUPERIOR */}
 
         <header className="topbar">
-
           <div className="desktop-logo">
             <Logo compact />
           </div>
 
+          {/* BUSCADOR */}
+
           <div
             className="search"
-            style={{
-              position: "relative",
-            }}
+            style={{ position: "relative" }}
           >
-
             <Search size={19} />
 
             <input
@@ -978,16 +745,17 @@ function Dashboard({
                 setSearchOpen(Boolean(value.trim()));
               }}
               onFocus={() => {
-                if (searchTerm.trim()) {
-                  setSearchOpen(true);
-                }
+                if (searchTerm.trim()) setSearchOpen(true);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   setSearchOpen(false);
                 }
 
-                if (e.key === "Enter" && searchResults.length > 0) {
+                if (
+                  e.key === "Enter" &&
+                  searchResults.length > 0
+                ) {
                   e.preventDefault();
                   goToSection(searchResults[0].section);
                   setSearchTerm("");
@@ -1015,7 +783,6 @@ function Dashboard({
                   overflowY: "auto",
                 }}
               >
-
                 {searchResults.length > 0 ? (
                   searchResults.map((item) => {
                     const Icon = item.icon;
@@ -1050,7 +817,6 @@ function Dashboard({
                           e.currentTarget.style.background = "transparent";
                         }}
                       >
-
                         <span
                           style={{
                             width: 36,
@@ -1066,12 +832,7 @@ function Dashboard({
                           <Icon size={18} />
                         </span>
 
-                        <span
-                          style={{
-                            minWidth: 0,
-                            flex: 1,
-                          }}
-                        >
+                        <span style={{ minWidth: 0, flex: 1 }}>
                           <strong
                             style={{
                               display: "block",
@@ -1096,7 +857,6 @@ function Dashboard({
                         </span>
 
                         <ChevronRight size={17} />
-
                       </button>
                     );
                   })
@@ -1112,69 +872,54 @@ function Dashboard({
                     No encontramos una sección con ese nombre.
                   </div>
                 )}
-
               </div>
             )}
-
           </div>
 
+          {/* ACCIONES */}
+
           <div className="top-actions">
-
-            <button className="icon-button">
-
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Notificaciones"
+            >
               <Bell size={21} />
-
               <i />
-
             </button>
 
             <button
               className="profile-button"
+              type="button"
               onClick={onLogout}
               title="Cerrar sesión"
             >
-
-              <div className="avatar">
-                🧑🏻‍🎨
-              </div>
+              <div className="avatar">🧑🏻‍🎨</div>
 
               <span>
                 {user?.name
-                  ? `¡Hola, ${
-                      user.name.split(
-                        " "
-                      )[0]
-                    }!`
+                  ? `¡Hola, ${user.name.split(" ")[0]}!`
                   : "¡Hola!"}
               </span>
 
-              <ChevronRight
-                size={17}
-              />
-
+              <ChevronRight size={17} />
             </button>
-
           </div>
-
         </header>
+
+        {/* CONTENIDO PRINCIPAL */}
 
         {activeSection === "Inicio" ? (
           <>
             {/* HERO */}
 
             <section className="hero">
-
               <div className="hero-copy">
-
-                <div className="sparkles">
-                  ✦　✧　✦
-                </div>
+                <div className="sparkles">✦　✧　✦</div>
 
                 <h1>
                   Mente
-                  <span>
-                    360
-                  </span>
+                  <span>360</span>
                 </h1>
 
                 <p>
@@ -1186,48 +931,35 @@ function Dashboard({
                 <div className="heart-line">
                   ━━　♡　━━
                 </div>
-
               </div>
 
               <div className="hero-brain">
-
-                <div className="orbit">
-                  ◜　　　　　　◝
-                </div>
+                <div className="orbit">◜　　　　　　◝</div>
 
                 <div className="brain-face">
-
                   🧠
 
                   <Heart
                     className="brain-heart"
                     fill="currentColor"
                   />
-
                 </div>
-
               </div>
 
               <div className="hero-bubble">
-
                 <strong>
                   Tu bienestar,
                   <br />
                   en un solo lugar
                 </strong>
 
-                <span>
-                  ♡
-                </span>
-
+                <span>♡</span>
               </div>
-
             </section>
 
-            {/* HERRAMIENTAS */}
+            {/* TARJETAS */}
 
             <section className="tools-section">
-
               <div className="title-decor">
                 <span>✧</span>
                 <h2>Explora Mente360</h2>
@@ -1235,7 +967,6 @@ function Dashboard({
               </div>
 
               <div className="tools-grid">
-
                 {tools.map(([title, desc, Icon, tone]) => (
                   <button
                     className={`tool-card ${tone}`}
@@ -1257,25 +988,29 @@ function Dashboard({
                   </button>
                 ))}
 
-              <button
-                type="button"
-                className="help-support-card"
-                onClick={() => goToSection("Necesito ayuda")}
-                aria-label="Abrir Necesito ayuda"
-              >
-                <div className="help-support-icon">
-                  <Heart size={27} />
-                </div>
-                <div className="help-support-text">
-                  <strong>¿Necesitas ayuda?</strong>
-                  <span>Encuentra orientación, apoyo y opciones para pedir ayuda.</span>
-                </div>
-                <ChevronRight size={21} />
-              </button>
+                <button
+                  type="button"
+                  className="help-support-card"
+                  onClick={() => goToSection("Necesito ayuda")}
+                  aria-label="Abrir Necesito ayuda"
+                >
+                  <div className="help-support-icon">
+                    <Heart size={27} />
+                  </div>
 
+                  <div className="help-support-text">
+                    <strong>¿Necesitas ayuda?</strong>
+                    <span>
+                      Encuentra orientación, apoyo y opciones para pedir ayuda.
+                    </span>
+                  </div>
+
+                  <ChevronRight size={21} />
+                </button>
               </div>
-
             </section>
+
+            <EstadisticasPublicas />
           </>
         ) : (
           <div className="section-route" id="section-content">
@@ -1283,39 +1018,27 @@ function Dashboard({
           </div>
         )}
 
-        {/* BANNER */}
+        {/* BANNER INFERIOR */}
 
         <section className="bottom-banner">
-
-          <div className="plant">
-            🌱
-          </div>
+          <div className="plant">🌱</div>
 
           <div>
-
             <strong>
               Tu salud mental también
               es importante
             </strong>
 
-            <div>
-              ━━　♡　━━
-            </div>
-
+            <div>━━　♡　━━</div>
           </div>
 
-          <div className="cloud-small">
-            ☁️
-          </div>
-
+          <div className="cloud-small">☁️</div>
         </section>
-
       </main>
 
-      {/* NAV INFERIOR */}
+      {/* NAVEGACIÓN INFERIOR */}
 
       <nav className="mobile-nav">
-
         <button
           className={activeSection === "Inicio" ? "selected" : ""}
           type="button"
@@ -1327,7 +1050,9 @@ function Dashboard({
 
         <button
           type="button"
-          className={activeSection === "Test de bienestar" ? "selected" : ""}
+          className={
+            activeSection === "Test de bienestar" ? "selected" : ""
+          }
           onClick={() => goToSection("Test de bienestar")}
         >
           <Zap />
@@ -1336,7 +1061,9 @@ function Dashboard({
 
         <button
           type="button"
-          className={activeSection === "Mapa de bienestar" ? "selected" : ""}
+          className={
+            activeSection === "Mapa de bienestar" ? "selected" : ""
+          }
           onClick={() => goToSection("Mapa de bienestar")}
         >
           <BookOpen />
@@ -1352,63 +1079,117 @@ function Dashboard({
           <UserRound />
           <span>Perfil</span>
         </button>
-
       </nav>
-
     </div>
   );
 }
 
 /* =========================================================
-   APP PRINCIPAL
+   APLICACIÓN PRINCIPAL Y SESIÓN DE SUPABASE
 ========================================================= */
 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const saved =
-    localStorage.getItem(
-      "mente360_session"
-    );
+  useEffect(() => {
+    let mounted = true;
 
-  const temporary =
-    sessionStorage.getItem(
-      "mente360_session"
-    );
+    const loadUser = async (session) => {
+      if (!session?.user) {
+        if (mounted) setUser(null);
+        return;
+      }
 
-  const initialUser = saved
-    ? JSON.parse(saved)
-    : temporary
-      ? JSON.parse(temporary)
-      : null;
+      const authUser = session.user;
 
-  const [user, setUser] =
-    useState(initialUser);
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", authUser.id)
+        .maybeSingle();
 
-  /* -----------------------------------------
-     CERRAR SESIÓN
-  ----------------------------------------- */
+      if (!mounted) return;
 
-  const logout = () => {
+      if (error) {
+        console.error("No se pudo cargar el perfil:", error);
+      }
 
-    localStorage.removeItem(
-      "mente360_session"
-    );
+      setUser({
+        id: authUser.id,
+        name:
+          profile?.display_name ||
+          authUser.user_metadata?.display_name ||
+          authUser.email,
+        email: authUser.email,
+      });
+    };
 
-    sessionStorage.removeItem(
-      "mente360_session"
-    );
+    const initialize = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) throw error;
+
+        await loadUser(data.session);
+      } catch (err) {
+        console.error("No se pudo recuperar la sesión:", err);
+
+        if (mounted) setUser(null);
+      } finally {
+        if (mounted) setAuthLoading(false);
+      }
+    };
+
+    initialize();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Ejecuta la consulta después de finalizar el callback de auth.
+      Promise.resolve().then(async () => {
+        if (!mounted) return;
+
+        try {
+          await loadUser(session);
+        } catch (err) {
+          console.error("No se pudo actualizar la sesión:", err);
+        } finally {
+          if (mounted) setAuthLoading(false);
+        }
+      });
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  /* CERRAR SESIÓN */
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("No se pudo cerrar la sesión:", error);
+      return;
+    }
 
     setUser(null);
   };
 
+  if (authLoading) {
+    return (
+      <div className="auth-page">
+        <p>Cargando Mente360...</p>
+      </div>
+    );
+  }
+
   return user ? (
-    <Dashboard
-      user={user}
-      onLogout={logout}
-    />
+    <Dashboard user={user} onLogout={logout} />
   ) : (
-    <AuthScreen
-      onEnter={setUser}
-    />
+    <AuthScreen onEnter={setUser} />
   );
 }

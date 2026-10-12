@@ -1,4 +1,9 @@
+import { useState } from "react";
 import { ArrowLeft, Heart, Star, Trophy, ShieldCheck, MessageCircleHeart } from "lucide-react";
+import Cualidades from "./Autoestima/Cualidades/Cualidades";
+import Logros from "./Autoestima/Logros/Logros";
+import Confianza from "./Autoestima/Confianza/Confianza";
+import DialogoInterno from "./Autoestima/DialogoInterno/DialogoInterno";
 
 const cards = [
   {
@@ -36,6 +41,13 @@ const cards = [
 ];
 
 export default function Autoestima({ onBack }) {
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+
+  if (selectedSubcategory) {
+    const Subcategory = { Cualidades: Cualidades, Logros: Logros, Confianza: Confianza, DialogoInterno: DialogoInterno }[selectedSubcategory];
+    return <Subcategory onBack={() => setSelectedSubcategory(null)} />;
+  }
+
   return (
     <section
       style={{
@@ -133,6 +145,7 @@ export default function Autoestima({ onBack }) {
         {cards.map(({ title, text, icon: Icon, bg, iconBg, iconColor }) => (
           <article
             key={title}
+            onClick={() => { const map = { "Conoce tus cualidades": "Cualidades", "Reconoce tus logros": "Logros", "Aumenta tu confianza": "Confianza", "Cuida tu diálogo interno": "DialogoInterno" }; setSelectedSubcategory(map[title]); }}
             style={{
               minHeight: 84,
               padding: "12px 18px",

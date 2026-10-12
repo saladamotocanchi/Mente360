@@ -10,7 +10,9 @@ import RedesSociales from "./sections/RedesSociales";
 import BienestarDiario from "./sections/BienestarDiario";
 import DiarioEmocional from "./sections/DiarioEmocional";
 import MapaBienestar from "./sections/MapaBienestar";
+import TestBienestar from "./sections/TestBienestar";
 import NecesitoAyuda from "./sections/NecesitoAyuda";
+import Perfil from "./sections/Perfil/Perfil";
 
 import {
   Bell,
@@ -763,7 +765,7 @@ function Dashboard({
   };
 
   const renderSection = () => {
-    const props = { onBack: () => goToSection("Inicio") };
+    const props = { onBack: () => goToSection("Inicio"), user, onLogout };
 
     switch (activeSection) {
       case "¿Cómo me siento?":
@@ -786,8 +788,12 @@ function Dashboard({
         return <DiarioEmocional {...props} />;
       case "Mapa de bienestar":
         return <MapaBienestar {...props} />;
+      case "Test de bienestar":
+        return <TestBienestar {...props} />;
       case "Necesito ayuda":
         return <NecesitoAyuda {...props} />;
+      case "Perfil":
+        return <Perfil {...props} />;
       default:
         return null;
     }
@@ -1060,8 +1066,8 @@ function Dashboard({
 
         <button
           type="button"
-          className={activeSection === "¿Cómo me siento?" ? "selected" : ""}
-          onClick={() => goToSection("¿Cómo me siento?")}
+          className={activeSection === "Test de bienestar" ? "selected" : ""}
+          onClick={() => goToSection("Test de bienestar")}
         >
           <Zap />
           <span>Test</span>
@@ -1078,8 +1084,8 @@ function Dashboard({
 
         <button
           type="button"
-          onClick={onLogout}
-          title="Cerrar sesión"
+          onClick={() => goToSection("Perfil")}
+          title="Perfil"
         >
           <UserRound />
           <span>Perfil</span>
