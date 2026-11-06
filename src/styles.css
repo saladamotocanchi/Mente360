@@ -2682,23 +2682,24 @@ main {
   width: 100%;
   margin-top: 14px;
   padding: 14px 18px;
-  border: 1px solid #f0d7e5;
+  border: 1px solid #d90072;
   border-radius: 22px;
-  background: linear-gradient(135deg, #fff0f7 0%, #f8efff 100%);
-  box-shadow: 0 8px 22px rgba(102, 80, 150, .08);
+  background: linear-gradient(110deg, #f00078 0%, #d500a5 55%, #8b2be2 100%);
+  box-shadow: 0 9px 24px rgba(213, 0, 125, .24);
   display: flex;
   align-items: center;
   gap: 14px;
   text-align: left;
-  color: #51439d;
+  color: #ffffff;
   cursor: pointer;
   font: inherit;
-  transition: transform .18s ease, box-shadow .18s ease;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
 }
 
 .help-support-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 11px 26px rgba(102, 80, 150, .12);
+  box-shadow: 0 13px 30px rgba(213, 0, 125, .32);
+  filter: saturate(1.12) brightness(1.04);
 }
 
 .help-support-icon {
@@ -2706,11 +2707,12 @@ main {
   height: 52px;
   flex: 0 0 52px;
   border-radius: 17px;
-  background: #fff;
+  background: rgba(255, 255, 255, .2);
+  border: 1px solid rgba(255, 255, 255, .35);
   display: grid;
   place-items: center;
-  color: #d76d9d;
-  box-shadow: 0 5px 14px rgba(102, 80, 150, .08);
+  color: #ffffff;
+  box-shadow: 0 5px 14px rgba(75, 0, 55, .12);
 }
 
 .help-support-text {
@@ -2723,13 +2725,13 @@ main {
 
 .help-support-text strong {
   font-size: 15px;
-  color: #51439d;
+  color: #ffffff;
 }
 
 .help-support-text span {
   font-size: 12px;
   line-height: 1.4;
-  color: #747793;
+  color: rgba(255, 255, 255, .94);
 }
 
 @media (max-width: 600px) {
@@ -3326,4 +3328,59 @@ main {
   .mobile-nav button span {
     font-size: 9px;
   }
+}
+
+
+/* =========================================================
+   PALETA VIVA MENTE360 — TARJETAS DE LA PANTALLA PRINCIPAL
+   Rojo, amarillo, azul, blanco, verde, naranja y morado.
+   ========================================================= */
+.tools-grid .tool-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid transparent;
+  box-shadow: 0 9px 22px rgba(39, 35, 76, .12);
+  transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+}
+.tools-grid .tool-card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 72%;
+  height: 130%;
+  right: -18%;
+  top: -45%;
+  border-radius: 50%;
+  background: rgba(255,255,255,.13);
+  pointer-events: none;
+}
+.tools-grid .tool-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 28px rgba(39, 35, 76, .18);
+  filter: saturate(1.04);
+}
+.tools-grid .tool-card .tool-icon {
+  background: rgba(255,255,255,.19);
+  color: currentColor;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);
+}
+.tools-grid .tool-card .tool-text h3,
+.tools-grid .tool-card .tool-text p { color: inherit; }
+.tools-grid .tool-card.red { color:#fff; background:linear-gradient(135deg,#ff3038 0%,#e50916 100%); }
+.tools-grid .tool-card.yellow { color:#202020; background:linear-gradient(135deg,#fff12b 0%,#e9d900 100%); }
+.tools-grid .tool-card.blue { color:#fff; background:linear-gradient(135deg,#3999ed 0%,#176fc3 100%); }
+.tools-grid .tool-card.white { color:#292447; background:linear-gradient(135deg,#fff 0%,#f3f1fa 100%); border-color:#e4def2; }
+.tools-grid .tool-card.green { color:#fff; background:linear-gradient(135deg,#83c936 0%,#58a91f 100%); }
+.tools-grid .tool-card.orange { color:#fff; background:linear-gradient(135deg,#ff941b 0%,#ed6500 100%); }
+.tools-grid .tool-card.purple { color:#fff; background:linear-gradient(135deg,#9145d8 0%,#6420a7 100%); }
+.tools-grid .tool-card.yellow .tool-icon,
+.tools-grid .tool-card.white .tool-icon {
+  background:rgba(40,35,65,.08);
+  box-shadow:inset 0 0 0 1px rgba(40,35,65,.08);
+}
+.tools-grid .tool-card .arrow { color:inherit; opacity:.85; }
+@media (prefers-reduced-motion: reduce) {
+  .tools-grid .tool-card { transition:none; }
+  .tools-grid .tool-card:hover { transform:none; }
 }
