@@ -10,32 +10,48 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const psicologos = [
+const contactosPsicologia = [
   {
-    nombre: "María del Rosario Melendes Costa",
-    descripcion: "Practicante de Psicología · UNJBG",
-    telefono: "999 000 001",
+    nombre: "Nuria Telleria",
+    descripcion: "Contacto de apoyo · IEE FAZ",
+    telefono: "981 237 959",
   },
   {
-    nombre: "Andrea Martínez Flores",
-    descripcion: "Practicante de Psicología · UNJBG",
-    telefono: "999 000 002",
+    nombre: "Leydy Paria",
+    descripcion: "Contacto de apoyo · IEE FAZ",
+    telefono: "921 093 781",
   },
   {
-    nombre: "Valeria Torres Quispe",
-    descripcion: "Practicante de Psicología · UNJBG",
-    telefono: "999 000 003",
+    nombre: "Miranda Pera",
+    descripcion: "Contacto de apoyo · IEE FAZ",
+    telefono: "960 553 545",
   },
   {
-    nombre: "Camila Rojas Mendoza",
-    descripcion: "Practicante de Psicología · UNJBG",
-    telefono: "999 000 004",
+    nombre: "Alexandra Aliaga",
+    descripcion: "Contacto de apoyo · IEE FAZ",
+    telefono: "927 450 441",
+  },
+  {
+    nombre: "Milagros Limache",
+    descripcion: "Contacto de apoyo · IEE FAZ",
+    telefono: "952 342 382",
+  },
+  {
+    nombre: "Psicóloga de la IEE FAZ",
+    descripcion: "Atención psicológica · IEE FAZ",
+    telefono: "992 345 123",
   },
 ];
 
 export default function Psicologo({ onBack }) {
   const [step, setStep] = useState(1);
   const [feeling, setFeeling] = useState("");
+  const [contactosConTurno] = useState(() =>
+    contactosPsicologia.map((contacto) => ({
+      ...contacto,
+      turno: Math.random() < 0.5 ? "Mañana" : "Tarde",
+    }))
+  );
 
   const goNext = () => {
     setStep(2);
@@ -442,14 +458,18 @@ export default function Psicologo({ onBack }) {
             </div>
           </div>
 
-          {/* PSICÓLOGOS */}
+          <p style={{ color: "#747793", fontSize: "12px", lineHeight: 1.5, margin: "0 0 12px" }}>
+            Los turnos se muestran de forma aleatoria solo como referencia; confirma directamente la disponibilidad antes de acudir o llamar.
+          </p>
+
+          {/* CONTACTOS DE APOYO PSICOLÓGICO IEE FAZ */}
           <div
             style={{
               display: "grid",
               gap: "12px",
             }}
           >
-            {psicologos.map((psicologo) => (
+            {contactosConTurno.map((psicologo) => (
               <article
                 key={psicologo.nombre}
                 style={{
@@ -515,6 +535,20 @@ export default function Psicologo({ onBack }) {
                     >
                       📞 {psicologo.telefono}
                     </p>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        marginTop: "8px",
+                        padding: "5px 10px",
+                        borderRadius: "999px",
+                        background: psicologo.turno === "Mañana" ? "#fff4cf" : "#e9e4ff",
+                        color: psicologo.turno === "Mañana" ? "#805b00" : "#51439d",
+                        fontSize: "11px",
+                        fontWeight: 900,
+                      }}
+                    >
+                      Turno referencial: {psicologo.turno}
+                    </span>
                   </div>
                 </div>
 
